@@ -1,3 +1,4 @@
+
 import React from 'react'
 import { WifiOff } from 'lucide-react'
 
@@ -12,9 +13,7 @@ export const OfflineBanner: React.FC<OfflineBannerProps> = ({
   cityName,
   lastUpdatedTime,
 }) => {
-  if (isOnline) {
-    return null
-  }
+  if (isOnline) return null
 
   const message =
     cityName && lastUpdatedTime
@@ -25,10 +24,10 @@ export const OfflineBanner: React.FC<OfflineBannerProps> = ({
     <aside
       role="status"
       aria-live="polite"
-      className="sticky top-0 z-50 border-b border-amber-500/30 bg-amber-950/90 px-4 py-2 text-center text-xs font-medium text-amber-200 backdrop-blur-md transition-all shadow-md"
+      className="sticky top-0 z-50 border-b border-amber-500/20 bg-[#211b12] px-4 py-2.5 text-center text-xs font-medium text-amber-200"
     >
       <div className="mx-auto flex max-w-5xl items-center justify-center gap-2">
-        <WifiOff className="h-3.5 w-3.5 shrink-0 text-amber-400" aria-hidden="true" />
+        <WifiOff className="h-3.5 w-3.5 shrink-0 text-amber-400" />
         <span>{message}</span>
       </div>
     </aside>

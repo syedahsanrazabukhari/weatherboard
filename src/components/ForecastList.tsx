@@ -1,3 +1,4 @@
+
 import React from 'react'
 import { DailyForecast } from '../types'
 import { WeatherIcon } from './WeatherIcon'
@@ -21,7 +22,7 @@ function formatDisplayDate(dateStr: string): string {
   try {
     const [year, month, day] = dateStr.split('-').map(Number)
     const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0))
-    return date.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', timeZone: 'UTC' })
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })
   } catch {
     return ''
   }
@@ -29,51 +30,63 @@ function formatDisplayDate(dateStr: string): string {
 
 export const ForecastList: React.FC<ForecastListProps> = ({ daily }) => {
   return (
-    <div className="space-y-3">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-        5-Day Forecast
-      </h3>
+    <section className="space-y-4">
+      <div className="flex items-end justify-between border-b border-white/[0.08] pb-3">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#777]">
+            The days ahead
+          </p>
+          <h3 className="mt-1 text-lg font-semibold tracking-[-0.035em] text-white">
+            5-day forecast
+          </h3>
+        </div>
+        <span className="text-[11px] text-[#777]">Daily outlook</span>
+      </div>
 
-      <div className="flex gap-2.5 overflow-x-auto pb-2 pt-0.5 sm:grid sm:grid-cols-5 sm:gap-3 sm:overflow-visible sm:pb-0">
+      <div className="grid grid-cols-5 gap-2 sm:gap-3">
         {daily.map((day, idx) => {
           const weekday = formatWeekday(day.date, idx)
           const dateLabel = formatDisplayDate(day.date)
 
           return (
-            <div
+            <article
               key={day.date}
-              className="flex min-w-[105px] flex-1 flex-col items-center justify-between rounded-2xl border border-slate-800/80 bg-slate-900/40 p-3.5 backdrop-blur-xs transition-colors hover:border-slate-700/80 sm:min-w-0 sm:p-4"
+              className={`flex min-w-0 flex-col items-center rounded-xl border p-2.5 text-center transition-colors sm:p-4 ${
+                idx === 0
+                  ? 'border-white/20 bg-[#202020]'
+                  : 'border-white/[0.07] bg-[#121212] hover:border-white/15'
+              }`}
             >
-              <div className="text-center">
-                <span className="block text-xs font-semibold text-slate-200">
-                  {weekday}
+              <span className="text-[11px] font-semibold text-[#e8e8e8] sm:text-xs">
+                {weekday}
+              </span>
+              <span className="mt-1 text-[9px] text-[#777] sm:text-[10px]">
+                {dateLabel}
+              </span>
+
+              <div className="my-3 flex h-9 w-9 items-center justify-center sm:my-4 sm:h-11 sm:w-11">
+                <WeatherIcon condition={day.condition} className="h-6 w-6 sm:h-7 sm:w-7" />
+              </div>
+
+              <div className="flex flex-col items-center gap-1 sm:flex-row sm:gap-2">
+                <span className="text-sm font-semibold tabular-nums text-white sm:text-base">
+                  {Math.round(day.maxC)}°
                 </span>
-                <span className="block text-[10px] text-slate-400">
-                  {dateLabel}
+                <span className="text-xs tabular-nums text-[#777] sm:text-sm">
+                  {Math.round(day.minC)}°
                 </span>
               </div>
 
-              <div className="my-3 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800/50">
-                <WeatherIcon condition={day.condition} className="h-6 w-6" />
-              </div>
-
-              <div className="w-full text-center">
-                <div className="flex items-center justify-center gap-1.5 text-xs">
-                  <span className="font-semibold text-slate-100">
-                    {Math.round(day.maxC)}°
-                  </span>
-                  <span className="text-slate-400">
-                    {Math.round(day.minC)}°
-                  </span>
-                </div>
-                <span className="mt-1 block truncate text-[10px] text-slate-400" title={day.description}>
-                  {day.description}
-                </span>
-              </div>
-            </div>
+              <span
+                className="mt-2 hidden max-w-full truncate text-[10px] capitalize text-[#777] sm:block"
+                title={day.description}
+              >
+                {day.description}
+              </span>
+            </article>
           )
         })}
       </div>
-    </div>
+    </section>
   )
 }

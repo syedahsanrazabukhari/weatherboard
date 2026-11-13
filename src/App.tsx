@@ -1,4 +1,6 @@
+
 import { useEffect, useRef, useState } from 'react'
+import { CloudSun } from 'lucide-react'
 import { CitySearch } from './components/CitySearch'
 import { CurrentWeather } from './components/CurrentWeather'
 import { ErrorState } from './components/ErrorState'
@@ -29,23 +31,20 @@ export default function App() {
   const isOnline = useOnlineStatus()
   const prevOnlineRef = useRef(isOnline)
 
-  // Initialize selected city exactly once from safe storage on mount
   const [selectedCity, setSelectedCity] = useState<City | null>(() => {
     return readLastCity() || readLastWeatherReport()?.city || null
   })
 
   const { report, status, error, retry, isRefreshing } = useWeather(selectedCity)
 
-  // In-app foreground reminder fallback (checks on load, visibilitychange, and timeouts)
   useForegroundReminder()
 
-  // Track latest references to prevent stale closures without re-triggering the online effect
   const selectedCityRef = useRef(selectedCity)
   selectedCityRef.current = selectedCity
+
   const retryRef = useRef(retry)
   retryRef.current = retry
 
-  // Auto-refresh ONLY on an actual offline -> online transition
   useEffect(() => {
     const wasOffline = !prevOnlineRef.current
     prevOnlineRef.current = isOnline
@@ -60,62 +59,74 @@ export default function App() {
     : undefined
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-slate-800 selection:text-slate-200">
-      {/* Offline Status Banner */}
+    <div className="min-h-screen flex flex-col bg-[#090909] text-[#f2f2f2] selection:bg-white/20">
       <OfflineBanner
         isOnline={isOnline}
         cityName={report?.city.name}
         lastUpdatedTime={lastUpdatedTime}
       />
 
-      {/* Sticky Mobile-First Header */}
-      <header className="sticky top-0 z-40 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md px-4 py-3.5 sm:px-6">
-        <div className="mx-auto flex max-w-6xl items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-800 border border-slate-700/60 shadow-xs">
-              <span className="text-xs font-semibold text-slate-200">WB</span>
+      <header className="sticky top-0 z-40 border-b border-white/[0.07] bg-[#0b0b0b]/90 backdrop-blur-xl">
+        <div className="mx-auto flex h-[68px] max-w-[1440px] items-center justify-between px-4 sm:px-7 lg:px-10">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/15 bg-[#1c1c1c]">
+              <CloudSun className="h-[19px] w-[19px] text-[#e8e0d2]" strokeWidth={1.7} />
             </div>
-            <h1 className="text-base font-semibold tracking-tight text-slate-100 sm:text-lg">
-              WeatherBoard
-            </h1>
+            <div>
+              <h1 className="text-[15px] font-semibold tracking-[-0.04em] text-white sm:text-base">
+                WeatherBoard
+              </h1>
+              <p className="hidden text-[10px] tracking-[0.16em] text-[#777] sm:block">
+                WEATHER, AT A GLANCE
+              </p>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            {isOnline ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-400">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Online
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-medium text-amber-400">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-                Offline
-              </span>
-            )}
+          <div className="flex items-center gap-3">
+            <span className="hidden text-[11px] text-[#777] sm:inline">
+              Live weather dashboard
+            </span>
+            <div className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-medium ${
+              isOnline
+                ? 'border-emerald-500/20 bg-emerald-500/[0.07] text-emerald-400'
+                : 'border-amber-500/20 bg-amber-500/[0.07] text-amber-400'
+            }`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${
+                isOnline ? 'bg-emerald-400' : 'bg-amber-400'
+              }`} />
+              {isOnline ? 'Online' : 'Offline'}
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8">
-        <div className="mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start lg:gap-8">
-            {/* Main Column: Search & Weather Display */}
-            <div className="space-y-6 lg:col-span-8">
-              {/* City Search Bar */}
-              <section aria-label="City Search">
+      <main className="w-full flex-1 px-4 py-7 sm:px-7 sm:py-9 lg:px-10">
+        <div className="mx-auto max-w-[1440px]">
+          <div className="mb-7 flex flex-col gap-2">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#777]">
+              Your personal weather station
+            </p>
+            <h2 className="text-2xl font-semibold tracking-[-0.055em] text-white sm:text-3xl">
+              Weather overview<span className="text-[#777]">.</span>
+            </h2>
+            <p className="max-w-xl text-sm leading-6 text-[#858585]">
+              Current conditions, upcoming forecasts and daily updates for the places that matter.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12 lg:gap-7">
+            <div className="min-w-0 space-y-6 lg:col-span-8">
+              <section aria-label="City Search" className="relative z-30">
                 <CitySearch onSelect={setSelectedCity} />
               </section>
 
-              {/* Mobile/Tablet Compact Favourites Panel (< 1024px) */}
-              <div className="block lg:hidden">
+              <div className="lg:hidden">
                 <FavoritesPanel
                   selectedCityId={selectedCity?.id ?? null}
                   onSelectCity={setSelectedCity}
                 />
               </div>
 
-              {/* Dynamic Weather Content */}
               {status === 'loading' && (
                 <section aria-label="Loading Weather">
                   <WeatherSkeleton />
@@ -129,7 +140,7 @@ export default function App() {
               )}
 
               {status === 'success' && report && (
-                <section aria-label="Weather Report" className="space-y-6 animate-fadeIn">
+                <section aria-label="Weather Report" className="space-y-7 animate-fadeIn">
                   <CurrentWeather report={report} isRefreshing={isRefreshing} />
                   <ForecastList daily={report.daily} />
                 </section>
@@ -138,55 +149,43 @@ export default function App() {
               {status === 'idle' && (
                 <section
                   aria-label="Empty State"
-                  className="relative overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-900/30 p-6 sm:p-8 backdrop-blur-xs"
+                  className="overflow-hidden rounded-2xl border border-white/[0.09] bg-[#111] px-6 py-14 text-center sm:py-20"
                 >
-                  <div className="flex flex-col items-center justify-center text-center py-10 sm:py-14">
-                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-800 bg-slate-900 shadow-inner">
-                      <svg
-                        className="h-6 w-6 text-slate-400"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z"
-                        />
-                      </svg>
-                    </div>
-                    <h2 className="text-base font-medium text-slate-200 sm:text-lg">
-                      Search for a city
-                    </h2>
-                    <p className="mt-1.5 max-w-sm text-xs sm:text-sm text-slate-400">
-                      Type at least 2 characters to discover cities and inspect current weather along with a 5-day forecast.
-                    </p>
+                  <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-[#1b1b1b]">
+                    <CloudSun className="h-7 w-7 text-[#b5a58e]" strokeWidth={1.4} />
                   </div>
+                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#777]">
+                    Start exploring
+                  </p>
+                  <h3 className="text-lg font-semibold tracking-tight text-white sm:text-xl">
+                    Search for a city
+                  </h3>
+                  <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#858585]">
+                    Find a location to see its current weather, conditions and five-day forecast.
+                  </p>
                 </section>
               )}
 
-              {/* Mobile/Tablet Reminder Settings (< 1024px) placed below weather */}
-              <div className="block lg:hidden">
-                <ReminderSettings
-                  city={selectedCity}
-                  currentReport={report}
-                />
+              <div className="lg:hidden">
+                <ReminderSettings city={selectedCity} currentReport={report} />
               </div>
             </div>
 
-            {/* Desktop Sidebar: Favourites & Reminder Settings (>= 1024px) */}
-            <aside aria-label="Sidebar" className="hidden lg:col-span-4 lg:block lg:sticky lg:top-20 space-y-6">
+            <aside aria-label="Dashboard Sidebar" className="hidden space-y-6 lg:col-span-4 lg:block lg:sticky lg:top-24">
               <FavoritesPanel
                 selectedCityId={selectedCity?.id ?? null}
                 onSelectCity={setSelectedCity}
               />
-              <ReminderSettings
-                city={selectedCity}
-                currentReport={report}
-              />
+              <ReminderSettings city={selectedCity} currentReport={report} />
             </aside>
           </div>
+
+          <footer className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-white/[0.07] pt-5 text-[11px] text-[#666] sm:flex-row">
+            <span>WeatherBoard · Clear skies, clear decisions.</span>
+            <span className="flex items-center gap-1.5">
+              Built for everyday forecasts
+            </span>
+          </footer>
         </div>
       </main>
     </div>

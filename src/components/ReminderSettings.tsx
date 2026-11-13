@@ -1,3 +1,4 @@
+
 import React, { useEffect, useId, useState } from 'react'
 import {
   AlertCircle,
@@ -55,7 +56,6 @@ export const ReminderSettings: React.FC<ReminderSettingsProps> = ({
   const errorId = useId()
   const activeCityName = city?.name || savedCityName || 'your city'
 
-  // Initialize permission and read stored settings
   useEffect(() => {
     const currentPerm = getPermission()
     setPermission(currentPerm)
@@ -78,26 +78,21 @@ export const ReminderSettings: React.FC<ReminderSettingsProps> = ({
         }
       }
     }
+
     void loadSettings()
 
-    // Re-check permission if the user updates browser settings and refocuses the tab
     const handleFocus = () => {
       setPermission(getPermission())
     }
+
     window.addEventListener('focus', handleFocus)
-    return () => {
-      window.removeEventListener('focus', handleFocus)
-    }
+    return () => window.removeEventListener('focus', handleFocus)
   }, [])
 
   const validateTime = (val: string): string | null => {
     const trimmed = val.trim()
-    if (!trimmed) {
-      return 'Please enter a reminder time.'
-    }
-    if (!TIME_REGEX.test(trimmed)) {
-      return 'Enter a valid 24-hour time (HH:mm, e.g. 08:00).'
-    }
+    if (!trimmed) return 'Please enter a reminder time.'
+    if (!TIME_REGEX.test(trimmed)) return 'Enter a valid 24-hour time (HH:mm, e.g. 08:00).'
     return null
   }
 
@@ -116,10 +111,10 @@ export const ReminderSettings: React.FC<ReminderSettingsProps> = ({
       lat: targetCity.latitude,
       lon: targetCity.longitude,
     }
+
     await setReminderSettings(data)
     setSavedCityName(targetCity.name)
 
-    // Register or unregister Periodic Background Sync according to state
     if (nextEnabled && permission === 'granted') {
       const syncRegistered = await registerDailyPeriodicSync()
       setPeriodicSyncStatus(syncRegistered ? 'active' : 'unsupported_or_failed')
@@ -130,38 +125,30 @@ export const ReminderSettings: React.FC<ReminderSettingsProps> = ({
   }
 
   const handleToggle = async () => {
-    if (permission === 'unsupported' || permission === 'denied') {
-      return
-    }
+    if (permission === 'unsupported' || permission === 'denied') return
 
     if (enabled) {
-      // Toggling OFF
       setEnabled(false)
-      if (city) {
-        await persistSettings(false, time, city)
-      }
+      if (city) await persistSettings(false, time, city)
       return
     }
 
-    // Toggling ON
     const err = validateTime(time)
     if (err) {
       setTimeError(err)
       return
     }
+
     setTimeError(null)
 
     if (permission === 'default') {
-      // Show explanation step in our own UI before triggering browser prompt
       setIsExplaining(true)
       return
     }
 
     if (permission === 'granted') {
       setEnabled(true)
-      if (city) {
-        await persistSettings(true, time, city)
-      }
+      if (city) await persistSettings(true, time, city)
     }
   }
 
@@ -172,9 +159,7 @@ export const ReminderSettings: React.FC<ReminderSettingsProps> = ({
 
     if (result === 'granted') {
       setEnabled(true)
-      if (city) {
-        await persistSettings(true, time, city)
-      }
+      if (city) await persistSettings(true, time, city)
     } else {
       setEnabled(false)
     }
@@ -188,9 +173,7 @@ export const ReminderSettings: React.FC<ReminderSettingsProps> = ({
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const nextVal = e.target.value
     setTime(nextVal)
-    if (timeError) {
-      setTimeError(validateTime(nextVal))
-    }
+    if (timeError) setTimeError(validateTime(nextVal))
   }
 
   const handleTimeBlur = async () => {
@@ -235,29 +218,25 @@ export const ReminderSettings: React.FC<ReminderSettingsProps> = ({
   return (
     <section
       aria-label="Daily Weather Reminder Settings"
-      className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4 sm:p-5 backdrop-blur-md shadow-xl"
+      className="rounded-2xl border border-white/[0.09] bg-[#111] p-4 sm:p-5"
     >
-      {/* Header with Title and Toggle */}
-      <div className="flex items-center justify-between border-b border-slate-800/70 pb-3.5">
-        <div className="flex items-center gap-2.5 min-w-0 pr-2">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400">
-            {enabled ? (
-              <BellRing className="h-4 w-4" aria-hidden="true" />
-            ) : (
-              <Bell className="h-4 w-4 text-slate-400" aria-hidden="true" />
-            )}
+      <div className="flex items-center justify-between gap-3 border-b border-white/[0.08] pb-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${
+            enabled
+              ? 'border-amber-400/20 bg-amber-400/[0.08] text-amber-300'
+              : 'border-white/[0.08] bg-[#202020] text-[#999]'
+          }`}>
+            {enabled ? <BellRing className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
           </div>
           <div className="min-w-0">
-            <h2 className="text-sm font-semibold tracking-tight text-slate-100 sm:text-base truncate">
-              Daily morning reminder
-            </h2>
-            <p className="text-[11px] text-slate-400 truncate">
+            <h2 className="truncate text-sm font-semibold text-white">Daily morning reminder</h2>
+            <p className="mt-0.5 truncate text-[11px] text-[#777]">
               {city ? `For ${city.name}` : 'Select a city to configure'}
             </p>
           </div>
         </div>
 
-        {/* Accessible Switch Toggle (min 44px touch target) */}
         <button
           type="button"
           role="switch"
@@ -265,62 +244,50 @@ export const ReminderSettings: React.FC<ReminderSettingsProps> = ({
           aria-label="Toggle daily morning reminder"
           disabled={isToggleDisabled}
           onClick={handleToggle}
-          className={`relative inline-flex h-11 w-12 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500/30 ${
-            isToggleDisabled ? 'cursor-not-allowed opacity-50' : ''
+          className={`relative inline-flex h-11 w-12 shrink-0 items-center justify-center rounded-full transition focus:outline-none focus:ring-2 focus:ring-white/20 ${
+            isToggleDisabled ? 'cursor-not-allowed opacity-40' : ''
           }`}
         >
-          {/* Switch Track */}
-          <span
-            className={`pointer-events-none inline-block h-6 w-11 rounded-full border transition-colors ${
-              enabled
-                ? 'border-cyan-500 bg-cyan-600'
-                : 'border-slate-700 bg-slate-800'
-            }`}
-          >
-            {/* Switch Knob */}
-            <span
-              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform ${
-                enabled ? 'translate-x-5 translate-y-0.5' : 'translate-x-0.5 translate-y-0.5'
-              }`}
-            />
+          <span className={`inline-block h-6 w-11 rounded-full border transition-colors ${
+            enabled ? 'border-[#c5a779] bg-[#9d8055]' : 'border-white/10 bg-[#292929]'
+          }`}>
+            <span className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${
+              enabled ? 'translate-x-5 translate-y-0.5' : 'translate-x-0.5 translate-y-0.5'
+            }`} />
           </span>
         </button>
       </div>
 
-      {/* Pre-Permission Explanation UI Step */}
       {isExplaining && (
         <div
           role="alertdialog"
           aria-modal="true"
           aria-labelledby="notification-explainer-title"
-          className="mt-3.5 rounded-xl border border-cyan-500/30 bg-cyan-950/30 p-3.5 animate-fadeIn"
+          className="mt-4 rounded-xl border border-amber-400/20 bg-[#211c14] p-4 animate-fadeIn"
         >
-          <div className="flex items-start gap-2.5">
-            <BellRing className="h-5 w-5 shrink-0 text-cyan-400 mt-0.5" aria-hidden="true" />
-            <div className="flex-1 min-w-0">
-              <h3
-                id="notification-explainer-title"
-                className="text-xs font-semibold text-cyan-200 sm:text-sm"
-              >
+          <div className="flex items-start gap-3">
+            <BellRing className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
+            <div className="min-w-0 flex-1">
+              <h3 id="notification-explainer-title" className="text-sm font-semibold text-amber-100">
                 Allow Morning Weather Notifications
               </h3>
-              <p className="mt-1 text-xs text-slate-300 leading-relaxed">
+              <p className="mt-2 text-xs leading-5 text-[#c1b9aa]">
                 WeatherBoard will send you one notification each morning with the weather for{' '}
-                <strong className="text-white font-medium">{activeCityName}</strong>. Your browser
+                <strong className="font-semibold text-white">{activeCityName}</strong>. Your browser
                 will now ask for permission.
               </p>
-              <div className="mt-3 flex items-center gap-2">
+              <div className="mt-4 flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={handleExplanationContinue}
-                  className="inline-flex min-h-[44px] items-center justify-center rounded-lg bg-cyan-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-cyan-500 active:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+                  className="min-h-[42px] rounded-lg bg-[#c0a174] px-4 py-2 text-xs font-semibold text-[#17120b] transition hover:bg-[#d0b58c] focus:outline-none focus:ring-2 focus:ring-amber-300/30"
                 >
                   Continue
                 </button>
                 <button
                   type="button"
                   onClick={handleExplanationDismiss}
-                  className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-medium text-slate-300 transition-colors hover:bg-slate-750 active:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500/30"
+                  className="min-h-[42px] rounded-lg border border-white/10 bg-[#252525] px-4 py-2 text-xs font-medium text-[#ccc] transition hover:bg-[#303030]"
                 >
                   Not now
                 </button>
@@ -330,54 +297,34 @@ export const ReminderSettings: React.FC<ReminderSettingsProps> = ({
         </div>
       )}
 
-      {/* State Notice: Unsupported Browser */}
       {permission === 'unsupported' && (
-        <div
-          role="status"
-          className="mt-3 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-300"
-        >
-          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400 mt-0.5" aria-hidden="true" />
-          <p>
-            Your browser doesn&apos;t support notifications. Try Chrome or Edge on desktop or
-            Android.
-          </p>
+        <div role="status" className="mt-4 flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/[0.06] p-3 text-xs leading-5 text-amber-200">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+          <p>Your browser doesn&apos;t support notifications. Try Chrome or Edge on desktop or Android.</p>
         </div>
       )}
 
-      {/* State Notice: Permission Denied */}
       {permission === 'denied' && (
-        <div
-          role="status"
-          className="mt-3 flex items-start gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300"
-        >
-          <BellOff className="h-4 w-4 shrink-0 text-rose-400 mt-0.5" aria-hidden="true" />
-          <p>
-            Notifications are blocked. Enable them in your browser&apos;s site settings, then come
-            back.
-          </p>
+        <div role="status" className="mt-4 flex items-start gap-2 rounded-lg border border-rose-500/20 bg-rose-500/[0.06] p-3 text-xs leading-5 text-rose-300">
+          <BellOff className="mt-0.5 h-4 w-4 shrink-0 text-rose-400" />
+          <p>Notifications are blocked. Enable them in your browser&apos;s site settings, then come back.</p>
         </div>
       )}
 
-      {/* State Notice: Permission Granted & Active Reminder Details */}
       {permission === 'granted' && enabled && savedCityName && (
-        <div
-          role="status"
-          className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300"
-        >
-          <div className="flex items-center gap-2 truncate">
-            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" aria-hidden="true" />
-            <span className="truncate">
-              Reminder set for <strong className="font-semibold text-emerald-200">{time}</strong> daily
-              for <strong className="font-semibold text-emerald-200">{savedCityName}</strong>
+        <div role="status" className="mt-4 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.06] p-3 text-xs text-emerald-200">
+          <div className="flex items-start gap-2">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+            <span className="min-w-0 flex-1 leading-5">
+              Reminder set for <strong className="text-emerald-100">{time}</strong> daily for{' '}
+              <strong className="text-emerald-100">{savedCityName}</strong>
             </span>
           </div>
-
-          {/* Prompt to update to currently selected city if different */}
           {city && city.name !== savedCityName && (
             <button
               type="button"
               onClick={handleUpdateCity}
-              className="shrink-0 text-[11px] font-medium text-cyan-400 underline hover:text-cyan-300 focus:outline-none"
+              className="ml-6 mt-2 text-[11px] font-semibold text-emerald-300 underline underline-offset-2 hover:text-emerald-200"
             >
               Update to {city.name}
             </button>
@@ -385,19 +332,13 @@ export const ReminderSettings: React.FC<ReminderSettingsProps> = ({
         </div>
       )}
 
-      {/* Time Configuration Controls */}
-      <div className="mt-3.5 space-y-3">
+      <div className="mt-4 space-y-4">
         <div>
-          <label
-            htmlFor={timeInputId}
-            className="block text-xs font-medium text-slate-300 mb-1.5"
-          >
-            Reminder time (24h)
+          <label htmlFor={timeInputId} className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.16em] text-[#888]">
+            Reminder time · 24-hour format
           </label>
           <div className="relative">
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-              <Clock className="h-4 w-4" aria-hidden="true" />
-            </div>
+            <Clock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#777]" />
             <input
               id={timeInputId}
               type="time"
@@ -407,62 +348,52 @@ export const ReminderSettings: React.FC<ReminderSettingsProps> = ({
               aria-invalid={Boolean(timeError)}
               aria-describedby={timeError ? errorId : undefined}
               disabled={isToggleDisabled}
-              className={`w-full min-h-[44px] rounded-xl border bg-slate-900/90 pl-9 pr-3 py-2 text-sm text-slate-100 outline-none transition-all focus:ring-2 ${
+              className={`min-h-[46px] w-full rounded-lg border bg-[#191919] py-2 pl-10 pr-3 text-sm text-white outline-none transition focus:ring-2 ${
                 timeError
-                  ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/20'
-                  : 'border-slate-800 focus:border-cyan-500/60 focus:ring-cyan-500/20'
-              } ${isToggleDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  ? 'border-rose-500/70 focus:ring-rose-500/15'
+                  : 'border-white/[0.09] focus:border-white/25 focus:ring-white/10'
+              } ${isToggleDisabled ? 'cursor-not-allowed opacity-40' : ''}`}
             />
           </div>
-
-          {/* Validation Error Message */}
           {timeError && (
-            <p
-              id={errorId}
-              role="alert"
-              className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-rose-400 animate-fadeIn"
-            >
-              <AlertCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              <span>{timeError}</span>
+            <p id={errorId} role="alert" className="mt-2 flex items-center gap-1.5 text-xs text-rose-400">
+              <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+              {timeError}
             </p>
           )}
         </div>
 
-        {/* Send Test Notification Button (only visible when permission is granted) */}
         {permission === 'granted' && (
-          <div className="pt-1">
-            <button
-              type="button"
-              onClick={handleSendTestNotification}
-              disabled={!city}
-              aria-label="Send test weather notification now"
-              className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-2.5 text-xs font-semibold text-slate-200 transition-colors hover:border-slate-600 hover:bg-slate-750 active:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {testSent ? (
-                <>
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" aria-hidden="true" />
-                  <span className="text-emerald-300">Test notification sent!</span>
-                </>
-              ) : (
-                <>
-                  <Send className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
-                  <span>Send test notification</span>
-                </>
-              )}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleSendTestNotification}
+            disabled={!city}
+            aria-label="Send test weather notification now"
+            className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-[#222] px-4 py-2.5 text-xs font-semibold text-[#ddd] transition hover:border-white/20 hover:bg-[#2b2b2b] focus:outline-none focus:ring-2 focus:ring-white/15 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {testSent ? (
+              <>
+                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                <span className="text-emerald-300">Test notification sent!</span>
+              </>
+            ) : (
+              <>
+                <Send className="h-3.5 w-3.5 text-[#999]" />
+                <span>Send test notification</span>
+              </>
+            )}
+          </button>
         )}
 
-        {/* Periodic Background Sync Status Line */}
         {enabled && periodicSyncStatus === 'active' && (
-          <p className="text-[11px] text-emerald-400/90 flex items-center gap-1.5 pt-0.5">
-            <Radio className="h-3.5 w-3.5 text-emerald-400 animate-pulse" aria-hidden="true" />
-            <span>Background reminders are active</span>
+          <p className="flex items-center gap-2 text-[11px] text-emerald-400">
+            <Radio className="h-3.5 w-3.5 animate-pulse" />
+            Background reminders are active
           </p>
         )}
 
         {enabled && periodicSyncStatus === 'unsupported_or_failed' && (
-          <p className="text-[11px] text-slate-400 leading-relaxed pt-0.5">
+          <p className="text-[11px] leading-5 text-[#888]">
             Your browser can&apos;t run background reminders. Keep WeatherBoard open (or installed)
             at your reminder time to receive it.
           </p>

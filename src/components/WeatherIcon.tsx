@@ -1,3 +1,4 @@
+
 import React from 'react'
 import {
   Cloud,
@@ -29,29 +30,37 @@ export const WeatherIcon: React.FC<WeatherIconProps> = ({
   switch (condition) {
     case 'clear':
       return isNight ? (
-        <Moon className={`${className} text-indigo-300`} size={size} aria-hidden="true" />
+        <Moon className={`${className} text-[#c5c0d2]`} size={size} aria-hidden="true" />
       ) : (
-        <Sun className={`${className} text-amber-400`} size={size} aria-hidden="true" />
+        <Sun className={`${className} text-[#e4bd72]`} size={size} aria-hidden="true" />
       )
+
     case 'partly-cloudy':
       return isNight ? (
-        <CloudMoon className={`${className} text-indigo-200`} size={size} aria-hidden="true" />
+        <CloudMoon className={`${className} text-[#c5c0d2]`} size={size} aria-hidden="true" />
       ) : (
-        <CloudSun className={`${className} text-amber-300`} size={size} aria-hidden="true" />
+        <CloudSun className={`${className} text-[#d8b978]`} size={size} aria-hidden="true" />
       )
+
     case 'cloudy':
-      return <Cloud className={`${className} text-slate-300`} size={size} aria-hidden="true" />
+      return <Cloud className={`${className} text-[#b8b8b8]`} size={size} aria-hidden="true" />
+
     case 'fog':
-      return <CloudFog className={`${className} text-slate-400`} size={size} aria-hidden="true" />
+      return <CloudFog className={`${className} text-[#999]`} size={size} aria-hidden="true" />
+
     case 'drizzle':
-      return <CloudDrizzle className={`${className} text-cyan-300`} size={size} aria-hidden="true" />
+      return <CloudDrizzle className={`${className} text-[#a9b9bb]`} size={size} aria-hidden="true" />
+
     case 'rain':
-      return <CloudRain className={`${className} text-blue-400`} size={size} aria-hidden="true" />
+      return <CloudRain className={`${className} text-[#91aab5]`} size={size} aria-hidden="true" />
+
     case 'thunderstorm':
-      return <CloudLightning className={`${className} text-yellow-400`} size={size} aria-hidden="true" />
+      return <CloudLightning className={`${className} text-[#d5b66f]`} size={size} aria-hidden="true" />
+
     case 'snow':
-      return <CloudSnow className={`${className} text-sky-200`} size={size} aria-hidden="true" />
+      return <CloudSnow className={`${className} text-[#c8d0d2]`} size={size} aria-hidden="true" />
+
     default:
-      return <Cloud className={`${className} text-slate-300`} size={size} aria-hidden="true" />
+      return <Cloud className={`${className} text-[#b8b8b8]`} size={size} aria-hidden="true" />
   }
 }

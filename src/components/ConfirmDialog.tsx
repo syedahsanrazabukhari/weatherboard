@@ -1,3 +1,4 @@
+
 import React, { useEffect, useId, useRef } from 'react'
 
 export interface ConfirmDialogProps {
@@ -28,12 +29,10 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   const cancelBtnRef = useRef<HTMLButtonElement>(null)
   const triggerElementRef = useRef<HTMLElement | null>(null)
 
-  // Focus management: store previous focus on open, restore on close
   useEffect(() => {
     if (isOpen) {
       triggerElementRef.current = document.activeElement as HTMLElement | null
 
-      // Move focus into the dialog (defaulting to Cancel for safety)
       const timer = setTimeout(() => {
         cancelBtnRef.current?.focus()
       }, 20)
@@ -45,7 +44,6 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     }
   }, [isOpen])
 
-  // Keyboard navigation: Escape key and Tab focus trap
   useEffect(() => {
     if (!isOpen) return
 
@@ -80,17 +78,13 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, onCancel])
 
-  if (!isOpen) {
-    return null
-  }
+  if (!isOpen) return null
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs transition-opacity animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-fadeIn"
       onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          onCancel()
-        }
+        if (e.target === e.currentTarget) onCancel()
       }}
     >
       <div
@@ -99,24 +93,28 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={description ? descId : undefined}
-        className="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl transition-all animate-scaleUp"
+        className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#171717] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.7)] animate-scaleUp"
       >
-        <h3 id={titleId} className="text-base font-semibold text-slate-100 sm:text-lg">
+        <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.08] bg-[#242424]">
+          <span className="text-lg text-[#c5ad88]">!</span>
+        </div>
+
+        <h3 id={titleId} className="text-base font-semibold tracking-tight text-white sm:text-lg">
           {title}
         </h3>
 
         {description && (
-          <p id={descId} className="mt-2 text-xs text-slate-400 sm:text-sm">
+          <p id={descId} className="mt-2 text-sm leading-6 text-[#888]">
             {description}
           </p>
         )}
 
-        <div className="mt-6 flex items-center justify-end gap-3">
+        <div className="mt-7 flex items-center justify-end gap-2">
           <button
             ref={cancelBtnRef}
             type="button"
             onClick={onCancel}
-            className="inline-flex min-h-[44px] min-w-[70px] items-center justify-center rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-200 transition-colors hover:bg-slate-750 active:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500/30"
+            className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-white/10 bg-[#242424] px-4 py-2 text-xs font-semibold text-[#ddd] transition hover:bg-[#303030] focus:outline-none focus:ring-2 focus:ring-white/15"
           >
             {cancelText}
           </button>
@@ -124,10 +122,10 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           <button
             type="button"
             onClick={onConfirm}
-            className={`inline-flex min-h-[44px] min-w-[70px] items-center justify-center rounded-xl px-4 py-2 text-xs font-semibold text-white transition-colors focus:outline-none focus:ring-2 ${
+            className={`inline-flex min-h-[44px] items-center justify-center rounded-lg px-4 py-2 text-xs font-semibold transition focus:outline-none focus:ring-2 ${
               isDestructive
-                ? 'bg-rose-600 hover:bg-rose-500 active:bg-rose-700 focus:ring-rose-500/30'
-                : 'bg-cyan-600 hover:bg-cyan-500 active:bg-cyan-700 focus:ring-cyan-500/30'
+                ? 'bg-rose-700 text-white hover:bg-rose-600 focus:ring-rose-500/30'
+                : 'bg-[#d0b58c] text-[#17120b] hover:bg-[#dfc49b] focus:ring-amber-400/30'
             }`}
           >
             {confirmText}

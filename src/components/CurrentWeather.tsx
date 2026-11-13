@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react'
 import { AlertCircle, Droplets, Loader2, Star, Thermometer, Wind } from 'lucide-react'
 import { useFavorites } from '../hooks/useFavorites'
@@ -34,7 +35,6 @@ export const CurrentWeather: React.FC<CurrentWeatherProps> = ({ report, isRefres
   const windKmH = Math.round(current.windSpeedMs * 3.6)
   const updatedTime = formatCityTime(fetchedAt, timezoneOffsetSeconds)
 
-  // Clear limit notice when city changes
   useEffect(() => {
     setLimitNotice(null)
   }, [city.id])
@@ -59,137 +59,113 @@ export const CurrentWeather: React.FC<CurrentWeatherProps> = ({ report, isRefres
 
   return (
     <>
-      <div className="relative overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-900/40 p-5 sm:p-7 backdrop-blur-md shadow-xl">
-        {/* Header Info: Location, Star Toggle & Updated Timestamp */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <h2 className="text-xl font-semibold tracking-tight text-slate-100 sm:text-2xl">
-                {city.name}
-              </h2>
+      <article className="relative overflow-hidden rounded-2xl border border-white/[0.1] bg-[#111] shadow-[0_20px_70px_rgba(0,0,0,0.25)]">
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
 
-              {city.countryCode && (
-                <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[11px] font-mono font-medium text-slate-300 border border-slate-700/60">
-                  {city.countryCode}
-                </span>
-              )}
-
-              {/* Favourite Star Toggle */}
-              <button
-                type="button"
-                onClick={handleToggleFavorite}
-                aria-pressed={isFav}
-                aria-label={
-                  isFav
-                    ? `Remove ${city.name} from favourites`
-                    : `Add ${city.name} to favourites`
-                }
-                className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-800 bg-slate-800/50 text-slate-400 transition-colors hover:border-slate-700 hover:text-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/30 active:scale-95"
-              >
-                <Star
-                  className={`h-5 w-5 transition-transform ${
-                    isFav
-                      ? 'fill-amber-400 text-amber-400 scale-105'
-                      : 'text-slate-400 hover:text-amber-300'
-                  }`}
-                  aria-hidden="true"
-                />
-              </button>
-            </div>
-
-            {locationDetails && (
-              <p className="mt-0.5 text-xs text-slate-400 sm:text-sm">
-                {locationDetails}
-              </p>
-            )}
-
-            {/* Inline Limit Notice */}
-            {limitNotice && (
-              <p
-                role="alert"
-                className="mt-2 flex items-center gap-1.5 text-xs font-medium text-amber-400 animate-fadeIn"
-              >
-                <AlertCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                <span>{limitNotice}</span>
-              </p>
-            )}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            {source === 'open-meteo' && (
-              <span className="inline-flex items-center rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-medium text-amber-300">
-                Data from Open-Meteo (backup source)
-              </span>
-            )}
-            <span className="inline-flex items-center gap-1 text-[11px] font-mono text-slate-400">
-              {isRefreshing && (
-                <Loader2
-                  className="h-3 w-3 animate-spin text-slate-500"
-                  aria-label="Refreshing weather data"
-                />
-              )}
-              Last updated {updatedTime}
-            </span>
-          </div>
-        </div>
-
-        {/* Main Temp & Condition */}
-        <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-slate-800 bg-slate-800/60 shadow-inner sm:h-20 sm:w-20">
-              <WeatherIcon
-                condition={current.condition}
-                isNight={current.isNight}
-                className="h-10 w-10 sm:h-12 sm:w-12"
-              />
-            </div>
-            <div>
-              <div className="flex items-baseline">
-                <span className="text-4xl font-bold tracking-tight text-slate-50 sm:text-5xl">
-                  {Math.round(current.tempC)}
-                </span>
-                <span className="text-2xl font-light text-slate-400 sm:text-3xl">°C</span>
+        <div className="p-5 sm:p-7 lg:p-8">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h2 className="text-2xl font-semibold tracking-[-0.055em] text-white sm:text-3xl">
+                  {city.name}
+                </h2>
+                {city.countryCode && (
+                  <span className="rounded-md border border-white/10 bg-[#1c1c1c] px-2 py-1 font-mono text-[10px] tracking-wider text-[#aaa]">
+                    {city.countryCode}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={handleToggleFavorite}
+                  aria-pressed={isFav}
+                  aria-label={isFav ? `Remove ${city.name} from favourites` : `Add ${city.name} to favourites`}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-[#1c1c1c] text-[#999] transition hover:border-amber-400/30 hover:text-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-400/30"
+                >
+                  <Star className={`h-4 w-4 ${isFav ? 'fill-amber-400 text-amber-400' : ''}`} />
+                </button>
               </div>
-              <p className="mt-0.5 text-sm font-medium text-slate-300 sm:text-base">
-                {current.description}
-              </p>
+              {locationDetails && (
+                <p className="mt-1 text-sm text-[#858585]">{locationDetails}</p>
+              )}
+              {limitNotice && (
+                <p role="alert" className="mt-2 flex items-center gap-1.5 text-xs text-amber-400">
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  {limitNotice}
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#777]">
+              {source === 'open-meteo' && (
+                <span className="rounded-md border border-amber-500/20 bg-amber-500/[0.07] px-2.5 py-1 text-amber-300">
+                  Backup data source
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-white/[0.07] bg-[#191919] px-2.5 py-1.5 font-mono">
+                {isRefreshing && <Loader2 className="h-3 w-3 animate-spin" />}
+                Updated {updatedTime}
+              </span>
             </div>
           </div>
 
-          {/* Feels Like Pill */}
-          {current.feelsLikeC !== undefined && (
-            <div className="flex items-center gap-1.5 self-start rounded-xl border border-slate-800/80 bg-slate-800/40 px-3 py-1.5 text-xs text-slate-300 sm:self-center">
-              <Thermometer className="h-3.5 w-3.5 text-slate-400" />
-              <span>Feels like <strong className="text-slate-100">{Math.round(current.feelsLikeC)}°C</strong></span>
+          <div className="mt-9 grid grid-cols-1 items-center gap-7 sm:grid-cols-[1fr_auto] sm:gap-4">
+            <div className="flex items-center gap-5 sm:gap-7">
+              <div className="flex h-[88px] w-[88px] shrink-0 items-center justify-center rounded-2xl border border-white/[0.08] bg-[#1a1a1a] sm:h-28 sm:w-28">
+                <WeatherIcon
+                  condition={current.condition}
+                  isNight={current.isNight}
+                  className="h-12 w-12 sm:h-[60px] sm:w-[60px]"
+                />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-start leading-none">
+                  <span className="text-[76px] font-light tracking-[-0.09em] text-white sm:text-[96px]">
+                    {Math.round(current.tempC)}
+                  </span>
+                  <span className="ml-1 mt-2 text-3xl font-light text-[#888] sm:text-4xl">°</span>
+                </div>
+                <p className="mt-2 text-sm font-medium capitalize text-[#c5c5c5] sm:text-base">
+                  {current.description}
+                </p>
+                {current.feelsLikeC !== undefined && (
+                  <p className="mt-1.5 flex items-center gap-1.5 text-xs text-[#777]">
+                    <Thermometer className="h-3.5 w-3.5" />
+                    Feels like {Math.round(current.feelsLikeC)}°C
+                  </p>
+                )}
+              </div>
             </div>
-          )}
+
+            <div className="flex items-center gap-2 self-end sm:self-center">
+              <span className="rounded-lg border border-white/[0.08] bg-[#191919] px-3 py-2 text-xs text-[#aaa]">
+                Celsius
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-9 grid grid-cols-2 gap-3 border-t border-white/[0.08] pt-5">
+            <div className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-[#171717] p-3.5 sm:p-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#25221d] text-[#d6b77a]">
+                <Droplets className="h-[18px] w-[18px]" />
+              </div>
+              <div>
+                <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[#777]">Humidity</p>
+                <p className="mt-1 text-base font-semibold tabular-nums text-[#eee]">{current.humidity}%</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-[#171717] p-3.5 sm:p-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#202426] text-[#aab9bd]">
+                <Wind className="h-[18px] w-[18px]" />
+              </div>
+              <div>
+                <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[#777]">Wind speed</p>
+                <p className="mt-1 text-base font-semibold tabular-nums text-[#eee]">{windKmH} km/h</p>
+              </div>
+            </div>
+          </div>
         </div>
+      </article>
 
-        {/* Weather Metrics Bar */}
-        <div className="mt-6 grid grid-cols-2 gap-3 border-t border-slate-800/70 pt-5 sm:grid-cols-2">
-          <div className="flex items-center gap-3 rounded-xl border border-slate-800/50 bg-slate-900/60 p-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
-              <Droplets className="h-4 w-4" />
-            </div>
-            <div>
-              <span className="block text-[11px] font-medium text-slate-400">Humidity</span>
-              <span className="text-sm font-semibold text-slate-200">{current.humidity}%</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 rounded-xl border border-slate-800/50 bg-slate-900/60 p-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              <Wind className="h-4 w-4" />
-            </div>
-            <div>
-              <span className="block text-[11px] font-medium text-slate-400">Wind Speed</span>
-              <span className="text-sm font-semibold text-slate-200">{windKmH} km/h</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Confirmation Dialog for Star Button */}
       <ConfirmDialog
         isOpen={isConfirmOpen}
         title={`Remove ${city.name} from favourites?`}
