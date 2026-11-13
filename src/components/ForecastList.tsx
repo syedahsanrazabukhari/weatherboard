@@ -1,4 +1,3 @@
-
 import React from 'react'
 import { DailyForecast } from '../types'
 import { WeatherIcon } from './WeatherIcon'
@@ -29,64 +28,73 @@ function formatDisplayDate(dateStr: string): string {
 }
 
 export const ForecastList: React.FC<ForecastListProps> = ({ daily }) => {
+  const weekMin = Math.min(...daily.map((d) => d.minC))
+  const weekMax = Math.max(...daily.map((d) => d.maxC))
+  const span = Math.max(1, weekMax - weekMin)
+
   return (
-    <section className="space-y-4">
-      <div className="flex items-end justify-between border-b border-white/[0.08] pb-3">
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#777]">
-            The days ahead
-          </p>
-          <h3 className="mt-1 text-lg font-semibold tracking-[-0.035em] text-white">
-            5-day forecast
-          </h3>
-        </div>
-        <span className="text-[11px] text-[#777]">Daily outlook</span>
+    <section aria-labelledby="forecast-heading" className="space-y-4">
+      <div className="flex items-end justify-between px-1">
+        <h3 id="forecast-heading" className="text-lg font-semibold tracking-[-0.03em] text-white">
+          5-day forecast
+        </h3>
+        <span className="text-xs text-[#6f6f6f]">Low to high, per day</span>
       </div>
 
-      <div className="grid grid-cols-5 gap-2 sm:gap-3">
+      <ul className="space-y-2">
         {daily.map((day, idx) => {
           const weekday = formatWeekday(day.date, idx)
           const dateLabel = formatDisplayDate(day.date)
+          const left = ((day.minC - weekMin) / span) * 100
+          const width = Math.max(8, ((day.maxC - day.minC) / span) * 100)
 
           return (
-            <article
+            <li
               key={day.date}
-              className={`flex min-w-0 flex-col items-center rounded-xl border p-2.5 text-center transition-colors sm:p-4 ${
+              aria-label={`${weekday}, ${day.description}, high ${Math.round(day.maxC)} degrees, low ${Math.round(day.minC)} degrees`}
+              style={{ animationDelay: `${idx * 70}ms` }}
+              className={`animate-rise grid grid-cols-[60px_44px_minmax(0,1fr)] items-center gap-x-3 rounded-2xl border px-3 py-2.5 sm:grid-cols-[84px_48px_130px_minmax(0,1fr)] sm:gap-x-4 sm:px-5 ${
                 idx === 0
-                  ? 'border-white/20 bg-[#202020]'
-                  : 'border-white/[0.07] bg-[#121212] hover:border-white/15'
+                  ? 'border-white/[0.16] bg-white/[0.06]'
+                  : 'border-white/[0.07] bg-white/[0.025] transition-colors hover:bg-white/[0.05]'
               }`}
             >
-              <span className="text-[11px] font-semibold text-[#e8e8e8] sm:text-xs">
-                {weekday}
-              </span>
-              <span className="mt-1 text-[9px] text-[#777] sm:text-[10px]">
-                {dateLabel}
-              </span>
-
-              <div className="my-3 flex h-9 w-9 items-center justify-center sm:my-4 sm:h-11 sm:w-11">
-                <WeatherIcon condition={day.condition} className="h-6 w-6 sm:h-7 sm:w-7" />
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-white">{weekday}</p>
+                <p className="text-[11px] text-[#707070]">{dateLabel}</p>
               </div>
 
-              <div className="flex flex-col items-center gap-1 sm:flex-row sm:gap-2">
-                <span className="text-sm font-semibold tabular-nums text-white sm:text-base">
-                  {Math.round(day.maxC)}°
-                </span>
-                <span className="text-xs tabular-nums text-[#777] sm:text-sm">
-                  {Math.round(day.minC)}°
-                </span>
-              </div>
+              <WeatherIcon condition={day.condition} className="h-9 w-9 sm:h-10 sm:w-10" />
 
-              <span
-                className="mt-2 hidden max-w-full truncate text-[10px] capitalize text-[#777] sm:block"
+              <p
+                className="hidden truncate text-sm capitalize text-[#9a9a9a] sm:block"
                 title={day.description}
               >
                 {day.description}
-              </span>
-            </article>
+              </p>
+
+              <div className="flex items-center gap-2.5">
+                <span className="w-8 text-right text-sm tabular-nums text-[#8d8d8d]">
+                  {Math.round(day.minC)}°
+                </span>
+                <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-white/[0.08]">
+                  <div
+                    className="animate-barGrow absolute inset-y-0 rounded-full bg-gradient-to-r from-[#c9d0d6] via-[#f2d79a] to-[#ff9d3c]"
+                    style={{
+                      left: `${left}%`,
+                      width: `${Math.min(width, 100 - left)}%`,
+                      animationDelay: `${180 + idx * 70}ms`,
+                    }}
+                  />
+                </div>
+                <span className="w-8 text-sm font-semibold tabular-nums text-white">
+                  {Math.round(day.maxC)}°
+                </span>
+              </div>
+            </li>
           )
         })}
-      </div>
+      </ul>
     </section>
   )
 }

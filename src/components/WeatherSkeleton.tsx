@@ -1,4 +1,3 @@
-
 import React from 'react'
 
 const SkeletonBlock: React.FC<{ className: string }> = ({ className }) => (
@@ -8,7 +7,7 @@ const SkeletonBlock: React.FC<{ className: string }> = ({ className }) => (
 export const WeatherSkeleton: React.FC = () => {
   return (
     <div className="space-y-7" aria-live="polite" aria-busy="true">
-      <div className="rounded-2xl border border-white/[0.09] bg-[#111] p-5 sm:p-8">
+      <div className="rounded-3xl border border-white/[0.08] bg-[#0b0b0b]/80 p-5 sm:p-9">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-3">
             <SkeletonBlock className="h-7 w-40" />
@@ -17,38 +16,33 @@ export const WeatherSkeleton: React.FC = () => {
           <SkeletonBlock className="h-7 w-24 rounded-full" />
         </div>
 
-        <div className="mt-10 flex items-center gap-5 sm:gap-7">
-          <SkeletonBlock className="h-[88px] w-[88px] shrink-0 rounded-2xl sm:h-28 sm:w-28" />
+        <div className="mt-10 flex flex-col items-center gap-6 sm:flex-row sm:gap-10">
+          <SkeletonBlock className="h-[168px] w-[168px] shrink-0 rounded-full sm:h-[200px] sm:w-[200px]" />
           <div className="space-y-3">
-            <SkeletonBlock className="h-16 w-28 sm:h-20 sm:w-36" />
-            <SkeletonBlock className="h-4 w-32" />
-            <SkeletonBlock className="h-3 w-24" />
+            <SkeletonBlock className="h-20 w-40 sm:h-28 sm:w-56" />
+            <SkeletonBlock className="mx-auto h-5 w-32 sm:mx-0" />
           </div>
         </div>
 
-        <div className="mt-9 grid grid-cols-2 gap-3 border-t border-white/[0.08] pt-5">
-          <SkeletonBlock className="h-[68px] rounded-xl" />
-          <SkeletonBlock className="h-[68px] rounded-xl" />
+        <div className="mt-9 grid grid-cols-1 gap-3 border-t border-white/[0.08] pt-5 min-[420px]:grid-cols-3">
+          <SkeletonBlock className="h-[68px] rounded-2xl" />
+          <SkeletonBlock className="h-[68px] rounded-2xl" />
+          <SkeletonBlock className="h-[68px] rounded-2xl" />
         </div>
       </div>
 
-      <div className="space-y-4">
-        <div className="space-y-2 border-b border-white/[0.08] pb-3">
-          <SkeletonBlock className="h-2.5 w-24" />
-          <SkeletonBlock className="h-5 w-36" />
-        </div>
-        <div className="grid grid-cols-5 gap-2 sm:gap-3">
-          {[0, 1, 2, 3, 4].map((item) => (
-            <div
-              key={item}
-              className="flex h-36 flex-col items-center justify-between rounded-xl border border-white/[0.07] bg-[#121212] p-3 sm:h-40 sm:p-4"
-            >
-              <SkeletonBlock className="h-3 w-12" />
-              <SkeletonBlock className="h-9 w-9 rounded-xl" />
-              <SkeletonBlock className="h-4 w-12" />
-            </div>
-          ))}
-        </div>
+      <div className="space-y-3">
+        <SkeletonBlock className="h-5 w-36" />
+        {[0, 1, 2, 3, 4].map((item) => (
+          <div
+            key={item}
+            className="flex h-[62px] items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4"
+          >
+            <SkeletonBlock className="h-8 w-14" />
+            <SkeletonBlock className="h-9 w-9 rounded-full" />
+            <SkeletonBlock className="h-2 flex-1 rounded-full" />
+          </div>
+        ))}
       </div>
     </div>
   )

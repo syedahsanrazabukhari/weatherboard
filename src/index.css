@@ -1,10 +1,9 @@
-
 @import "tailwindcss";
 
 :root {
   color-scheme: dark;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #090909;
+  background: #050505;
   color: #f2f2f2;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -19,7 +18,7 @@
 html {
   min-width: 320px;
   min-height: 100%;
-  background: #090909;
+  background: #050505;
   scroll-behavior: smooth;
 }
 
@@ -27,9 +26,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background:
-    radial-gradient(ellipse at 50% -18%, rgba(255, 255, 255, 0.055), transparent 42%),
-    #090909;
+  background: #050505;
 }
 
 button,
@@ -111,9 +108,103 @@ button:disabled {
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, #171717 25%, #242424 50%, #171717 75%);
+  background: linear-gradient(90deg, #141414 25%, #212121 50%, #141414 75%);
   background-size: 200% 100%;
   animation: shimmer 1.7s infinite linear;
+}
+
+/* ------------------------------------------------------------------
+   Ambient background + entrance
+   ------------------------------------------------------------------ */
+@keyframes ambientIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes barGrow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.animate-ambient {
+  animation: ambientIn 1.4s ease-out both;
+}
+
+.animate-rise {
+  animation: rise .55s cubic-bezier(.2, .7, .2, 1) both;
+}
+
+.animate-barGrow {
+  transform-origin: left center;
+  animation: barGrow .8s cubic-bezier(.2, .7, .2, 1) both;
+}
+
+/* ------------------------------------------------------------------
+   Weather icon animations (SVG, CSS only)
+   ------------------------------------------------------------------ */
+.wx-anim {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes wx-spin { to { transform: rotate(360deg); } }
+@keyframes wx-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.045); }
+}
+@keyframes wx-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+@keyframes wx-float-alt {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-2.5px); }
+}
+@keyframes wx-drop {
+  0% { transform: translateY(-3px); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translateY(9px); opacity: 0; }
+}
+@keyframes wx-flake {
+  0% { transform: translate(0, -3px); opacity: 0; }
+  25% { opacity: 1; }
+  50% { transform: translate(2px, 3px); }
+  100% { transform: translate(-1px, 10px); opacity: 0; }
+}
+@keyframes wx-flash {
+  0%, 52%, 100% { opacity: 1; }
+  56% { opacity: .15; }
+  60% { opacity: 1; }
+  66% { opacity: .35; }
+  70% { opacity: 1; }
+}
+@keyframes wx-twinkle {
+  0%, 100% { opacity: .25; }
+  50% { opacity: 1; }
+}
+@keyframes wx-drift {
+  0%, 100% { transform: translateX(-2px); }
+  50% { transform: translateX(3px); }
+}
+
+.wx-spin { animation: wx-spin 24s linear infinite; }
+.wx-pulse { animation: wx-pulse 4.5s ease-in-out infinite; }
+.wx-float { animation: wx-float 5s ease-in-out infinite; }
+.wx-float-alt { animation: wx-float-alt 7s ease-in-out infinite; }
+.wx-drop { animation: wx-drop 1.15s ease-in infinite; }
+.wx-flake { animation: wx-flake 2.6s ease-in-out infinite; }
+.wx-flash { animation: wx-flash 3.4s linear infinite; }
+.wx-twinkle { animation: wx-twinkle 2.8s ease-in-out infinite; }
+.wx-drift { animation: wx-drift 4s ease-in-out infinite; }
+
+.wx-still,
+.wx-still * {
+  animation: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

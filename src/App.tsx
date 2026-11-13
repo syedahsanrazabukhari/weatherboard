@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react'
 import { CloudSun } from 'lucide-react'
 import { CitySearch } from './components/CitySearch'
@@ -13,6 +12,7 @@ import { useForegroundReminder } from './hooks/useForegroundReminder'
 import { useOnlineStatus } from './hooks/useOnlineStatus'
 import { useWeather } from './hooks/useWeather'
 import { readLastCity, readLastWeatherReport } from './lib/safeStorage'
+import { ambientGlow } from './lib/weatherTheme'
 import { City } from './types'
 
 function formatCityTime(isoString: string, timezoneOffsetSeconds: number): string {
@@ -58,15 +58,29 @@ export default function App() {
     ? formatCityTime(report.fetchedAt, report.timezoneOffsetSeconds)
     : undefined
 
+  const glow = report
+    ? ambientGlow(report.current.condition, report.current.isNight)
+    : 'rgba(255, 255, 255, 0.05)'
+  const glowKey = report ? `${report.current.condition}-${report.current.isNight}` : 'idle'
+
   return (
-    <div className="min-h-screen flex flex-col bg-[#090909] text-[#f2f2f2] selection:bg-white/20">
+    <div className="relative isolate flex min-h-screen flex-col bg-[#050505] text-[#f2f2f2] selection:bg-white/20">
+      <div
+        key={glowKey}
+        aria-hidden="true"
+        className="animate-ambient pointer-events-none fixed inset-0 -z-10"
+        style={{
+          background: `radial-gradient(60% 46% at 78% -4%, ${glow}, transparent 70%), radial-gradient(48% 36% at 4% 104%, rgba(255,255,255,0.045), transparent 70%)`,
+        }}
+      />
+
       <OfflineBanner
         isOnline={isOnline}
         cityName={report?.city.name}
         lastUpdatedTime={lastUpdatedTime}
       />
 
-      <header className="sticky top-0 z-40 border-b border-white/[0.07] bg-[#0b0b0b]/90 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-white/[0.07] bg-[#050505]/75 backdrop-blur-xl">
         <div className="mx-auto flex h-[68px] max-w-[1440px] items-center justify-between px-4 sm:px-7 lg:px-10">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/15 bg-[#1c1c1c]">
@@ -149,7 +163,7 @@ export default function App() {
               {status === 'idle' && (
                 <section
                   aria-label="Empty State"
-                  className="overflow-hidden rounded-2xl border border-white/[0.09] bg-[#111] px-6 py-14 text-center sm:py-20"
+                  className="overflow-hidden rounded-3xl border border-white/[0.09] bg-[#0b0b0b]/80 px-6 py-14 text-center backdrop-blur-xl sm:py-20"
                 >
                   <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-[#1b1b1b]">
                     <CloudSun className="h-7 w-7 text-[#b5a58e]" strokeWidth={1.4} />
