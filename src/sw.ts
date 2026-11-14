@@ -1,60 +1,74 @@
+
 /// <reference lib="webworker" />
 
 import { CacheableResponsePlugin } from 'workbox-cacheable-response'
 import { clientsClaim } from 'workbox-core'
 import { ExpirationPlugin } from 'workbox-expiration'
-import { cleanupOutdatedCaches, createHandlerBoundToURL, precacheAndRoute } from 'workbox-precaching'
-import { NavigationRoute, registerRoute } from 'workbox-routing'
-import { NetworkFirst } from 'workbox-strategies'
 import {
-  getLastNotifiedDate,
+  cleanupOutdatedCaches,
+  createHandlerBoundToURL,
+  precacheAndRoute,
+} from 'workbox-precaching'
+import {
+  NavigationRoute,
+  registerRoute,
+} from 'workbox-routing'
+import { NetworkFirst } from 'workbox-strategies'
+
+import {
+  getReminderLastNotifiedDate,
   getReminderSettings,
-  setLastNotifiedDate,
+  setReminderLastNotifiedDate,
 } from './lib/reminderStore'
+
 import {
   fetchReminderWeather,
   formatReminderNotification,
   getTodayLocalDateString,
-  isTimeAtOrAfter,
+  isReminderDue,
 } from './lib/weatherReminderNotification'
 
 declare const self: ServiceWorkerGlobalScope
 
-// Immediately activate service worker and claim open clients
+// Activate the new service worker.
 self.skipWaiting()
 clientsClaim()
 
-// 1. App Shell Precaching
+// 1. App shell precaching.
 precacheAndRoute(self.__WB_MANIFEST)
 cleanupOutdatedCaches()
 
-// 2. Navigation fallback for single-page application offline routing
+// 2. SPA navigation fallback.
 try {
   const handler = createHandlerBoundToURL('/index.html')
+
   const navigationRoute = new NavigationRoute(handler, {
     denylist: [/^\/_/, /\/[^/?]+\.[^/]+$/],
   })
+
   registerRoute(navigationRoute)
 } catch (error) {
-  console.warn('[Service Worker] Failed to register navigation route fallback:', error)
+  console.warn(
+    '[Service Worker] Navigation route registration failed:',
+    error
+  )
 }
 
-// 3. Runtime caching for weather data ONLY
-// Intercepts requests to api.openweathermap.org and api.open-meteo.com
-// Uses NetworkFirst with 8-second timeout, cached in 'weatherboard-weather-v1'
-// maxEntries: 4 ensures only the most recent city's data stays cached
-// Status 200 responses only. GeoDB autocomplete requests are NOT cached.
+// 3. Weather API caching.
 registerRoute(
   ({ url }) =>
     url.hostname === 'api.openweathermap.org' ||
     url.hostname === 'api.open-meteo.com',
+
   new NetworkFirst({
     cacheName: 'weatherboard-weather-v1',
     networkTimeoutSeconds: 8,
+
     plugins: [
       new CacheableResponsePlugin({
         statuses: [200],
       }),
+
       new ExpirationPlugin({
         maxEntries: 4,
         purgeOnQuotaError: true,
@@ -63,7 +77,7 @@ registerRoute(
   })
 )
 
-// 4. Notification Click: closes notification and focuses open client or opens target URL
+// 4. Notification clicks.
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
 
@@ -71,79 +85,121 @@ self.addEventListener('notificationclick', (event) => {
 
   event.waitUntil(
     self.clients
-      .matchAll({ type: 'window', includeUncontrolled: true })
+      .matchAll({
+        type: 'window',
+        includeUncontrolled: true,
+      })
       .then((clientList) => {
-        // Focus existing app window if available
         for (const client of clientList) {
-          if ('focus' in client && typeof client.focus === 'function') {
+          if (
+            'focus' in client &&
+            typeof client.focus === 'function'
+          ) {
             return client.focus()
           }
         }
-        // Otherwise open a new window at targetUrl
+
         if (self.clients.openWindow) {
           return self.clients.openWindow(targetUrl)
         }
+
+        return undefined
       })
-      .catch((err) => {
-        console.warn('[WeatherBoard SW] Error handling notificationclick:', err)
+      .catch((error) => {
+        console.warn(
+          '[WeatherBoard SW] Notification click failed:',
+          error
+        )
       })
   )
 })
 
-// 5. Periodic Background Sync for Daily Weather Reminder
-// LIMITATION NOTE:
-// True Web Push at an exact minute requires a backend push server (Web Push via VAPID/FCM).
-// In a client-side-only PWA, Periodic Background Sync is Chromium-only (Chrome/Edge on
-// desktop and Android), requires the PWA to be installed, and browser heuristics decide
-// the actual execution window based on user engagement, network, and battery optimization.
+// 5. Multiple reminder background processing.
+//
+// Important: Periodic Background Sync is best effort.
+// It does not guarantee execution at an exact minute.
+
 async function handleDailyWeatherPeriodicSync(): Promise<void> {
   try {
-    const settings = await getReminderSettings()
-    if (!settings || !settings.enabled) {
-      return
+    const reminders = await getReminderSettings()
+    const today = getTodayLocalDateString()
+
+    const activeReminders = reminders.filter(
+      (reminder) =>
+        reminder.enabled &&
+        reminder.days.length > 0
+    )
+
+    for (const reminder of activeReminders) {
+      try {
+        // Skip if today is not a selected weekday or time is not reached.
+        if (!isReminderDue(reminder.time, reminder.days)) {
+          continue
+        }
+
+        // Check this reminder's individual notification history.
+        const lastNotified = await getReminderLastNotifiedDate(
+          reminder.id
+        )
+
+        if (lastNotified === today) {
+          continue
+        }
+
+        const weatherData = await fetchReminderWeather(
+          reminder.lat,
+          reminder.lon
+        )
+
+        const { title, body } = formatReminderNotification(
+          reminder.cityName,
+          weatherData,
+          reminder.unit ?? 'c'
+        )
+
+        await self.registration.showNotification(title, {
+          body,
+          icon: '/pwa-192x192.png',
+          badge: '/pwa-192x192.png',
+
+          // Different tag for every reminder.
+          tag: `weatherboard-reminder-${reminder.id}`,
+
+          data: {
+            url: '/',
+          },
+        })
+
+        // Save history independently for this reminder.
+        await setReminderLastNotifiedDate(
+          reminder.id,
+          today
+        )
+      } catch (error) {
+        console.warn(
+          `[SW] Failed to process reminder ${reminder.id}:`,
+          error
+        )
+      }
     }
-
-    const todayStr = getTodayLocalDateString()
-    const lastNotified = await getLastNotifiedDate()
-
-    if (lastNotified === todayStr) {
-      // Already notified today
-      return
-    }
-
-    if (!isTimeAtOrAfter(settings.time)) {
-      // Current time is before the scheduled reminder time
-      return
-    }
-
-    // Try Open-Meteo first (no API key, fast) with the stored lat/lon
-    const weatherData = await fetchReminderWeather(settings.lat, settings.lon)
-    const { title, body } = formatReminderNotification(settings.cityName, weatherData, settings.unit ?? 'c')
-
-    await self.registration.showNotification(title, {
-      body,
-      icon: '/pwa-192x192.png',
-      badge: '/pwa-192x192.png',
-      tag: 'weatherboard-reminder',
-      data: {
-        url: '/',
-      },
-    })
-
-    // Record notification date so we only notify once per calendar day
-    await setLastNotifiedDate(todayStr)
   } catch (error) {
-    console.warn('[SW PeriodicSync] Failed to process daily weather sync:', error)
+    console.warn(
+      '[SW PeriodicSync] Reminder processing failed:',
+      error
+    )
   }
 }
 
+// 6. Periodic background sync listener.
 self.addEventListener('periodicsync', (event: any) => {
   if (event.tag === 'daily-weather') {
-    event.waitUntil(handleDailyWeatherPeriodicSync())
+    event.waitUntil(
+      handleDailyWeatherPeriodicSync()
+    )
   }
 })
 
-// Push event placeholder
+// 7. Push event placeholder.
 self.addEventListener('push', (event) => {
   console.log('[WeatherBoard SW] Push event received:', event)
 })

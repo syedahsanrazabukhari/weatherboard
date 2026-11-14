@@ -1,18 +1,9 @@
+
 /**
  * Shared Weather Reminder Notification Module
  *
- * Safe for use in both Window and ServiceWorkerGlobalScope environments.
- * Does NOT touch `window` or `localStorage`.
- *
- * ARCHITECTURAL LIMITATION NOTE:
- * True Web Push at an exact scheduled minute requires a backend push server
- * (using the Web Push Protocol with VAPID/FCM). In a client-side-only PWA,
- * we utilize the Periodic Background Sync API where supported.
- * Periodic Background Sync is Chromium-only (Chrome/Edge on desktop and Android),
- * requires the PWA to be installed, and browser heuristics decide the actual
- * execution window based on user engagement and battery state.
- * To provide a dependable experience across all browsers, the app also includes
- * foreground timer fallbacks that dispatch the notification when the tab is open.
+ * Safe for Window and ServiceWorkerGlobalScope.
+ * Does not access window or localStorage.
  */
 
 export interface ReminderWeatherData {
@@ -27,58 +18,52 @@ export interface NotificationPayload {
   body: string
 }
 
-/**
- * Maps WMO weather interpretation codes to human-readable condition descriptions.
- */
+export const WEEKDAYS = [
+  { value: 1, label: 'Monday', short: 'Mon' },
+  { value: 2, label: 'Tuesday', short: 'Tue' },
+  { value: 3, label: 'Wednesday', short: 'Wed' },
+  { value: 4, label: 'Thursday', short: 'Thu' },
+  { value: 5, label: 'Friday', short: 'Fri' },
+  { value: 6, label: 'Saturday', short: 'Sat' },
+  { value: 0, label: 'Sunday', short: 'Sun' },
+] as const
+
 function getWmoDescription(code: number): string {
   switch (code) {
-    case 0:
-      return 'clear sky'
-    case 1:
-      return 'mainly clear'
-    case 2:
-      return 'partly cloudy'
-    case 3:
-      return 'overcast'
+    case 0: return 'clear sky'
+    case 1: return 'mainly clear'
+    case 2: return 'partly cloudy'
+    case 3: return 'overcast'
     case 45:
-    case 48:
-      return 'fog'
+    case 48: return 'fog'
     case 51:
     case 53:
     case 55:
     case 56:
-    case 57:
-      return 'drizzle'
+    case 57: return 'drizzle'
     case 61:
     case 63:
     case 65:
     case 66:
-    case 67:
-      return 'rain'
+    case 67: return 'rain'
     case 71:
     case 73:
     case 75:
-    case 77:
-      return 'snow'
+    case 77: return 'snow'
     case 80:
     case 81:
-    case 82:
-      return 'rain showers'
+    case 82: return 'rain showers'
     case 85:
-    case 86:
-      return 'snow showers'
+    case 86: return 'snow showers'
     case 95:
     case 96:
-    case 99:
-      return 'thunderstorm'
-    default:
-      return 'partly cloudy'
+    case 99: return 'thunderstorm'
+    default: return 'partly cloudy'
   }
 }
 
 /**
- * Fetches current weather and today's high/low directly from Open-Meteo.
- * Open-Meteo requires no API key, works seamlessly across domains, and is fast.
+ * Fetches weather from Open-Meteo.
  */
 export async function fetchReminderWeather(
   lat: number,
@@ -86,6 +71,7 @@ export async function fetchReminderWeather(
   signal?: AbortSignal
 ): Promise<ReminderWeatherData | null> {
   const url = new URL('https://api.open-meteo.com/v1/forecast')
+
   url.searchParams.set('latitude', String(lat))
   url.searchParams.set('longitude', String(lon))
   url.searchParams.set('current', 'temperature_2m,weather_code')
@@ -99,11 +85,9 @@ export async function fetchReminderWeather(
       signal,
     })
 
-    if (!res.ok) {
-      return null
-    }
+    if (!res.ok) return null
 
-    const json = (await res.json()) as {
+    const json = await res.json() as {
       current?: {
         temperature_2m?: number
         weather_code?: number
@@ -119,9 +103,7 @@ export async function fetchReminderWeather(
     const high = json.daily?.temperature_2m_max?.[0]
     const low = json.daily?.temperature_2m_min?.[0]
 
-    if (typeof currentTemp !== 'number') {
-      return null
-    }
+    if (typeof currentTemp !== 'number') return null
 
     return {
       tempC: currentTemp,
@@ -130,15 +112,13 @@ export async function fetchReminderWeather(
       lowC: typeof low === 'number' ? low : currentTemp,
     }
   } catch (error) {
-    console.warn('[WeatherReminder] Open-Meteo fetch failed:', error)
+    console.warn('[WeatherReminder] Weather fetch failed:', error)
     return null
   }
 }
 
 /**
- * Formats notification title and body according to reminder data.
- * If data is available: "Good morning! Karachi: 27°C, haze. High 29°, low 26°."
- * Fallback: "Check today's weather for Karachi."
+ * Builds a weather notification.
  */
 export function formatReminderNotification(
   cityName: string,
@@ -146,14 +126,15 @@ export function formatReminderNotification(
   unit: 'c' | 'f' = 'c'
 ): NotificationPayload {
   if (data) {
-    const toUnit = (celsius: number) => {
-      const value = Math.round(unit === 'f' ? (celsius * 9) / 5 + 32 : celsius)
-      return value === 0 ? 0 : value // avoids "-0"
-    }
+    const toUnit = (celsius: number) =>
+      Math.round(unit === 'f' ? (celsius * 9) / 5 + 32 : celsius)
+
     const temp = toUnit(data.tempC)
     const high = toUnit(data.highC)
     const low = toUnit(data.lowC)
+
     const symbol = unit === 'f' ? '°F' : '°C'
+
     return {
       title: 'Good morning!',
       body: `${cityName}: ${temp}${symbol}, ${data.description}. High ${high}°, low ${low}°.`,
@@ -167,23 +148,40 @@ export function formatReminderNotification(
 }
 
 /**
- * Returns the current calendar date in local time as 'YYYY-MM-DD'.
+ * Returns the local date in YYYY-MM-DD format.
  */
 export function getTodayLocalDateString(date = new Date()): string {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
+
   return `${year}-${month}-${day}`
 }
 
 /**
- * Checks if the current local time is at or after the target reminder time ('HH:mm').
+ * Checks whether the current time has reached the specified time.
  */
-export function isTimeAtOrAfter(reminderTime: string, now = new Date()): boolean {
+export function isTimeAtOrAfter(
+  reminderTime: string,
+  now = new Date()
+): boolean {
   const parts = reminderTime.split(':')
+
   if (parts.length !== 2) return false
+
   const targetHour = Number(parts[0])
   const targetMinute = Number(parts[1])
+
+  if (
+    !Number.isInteger(targetHour) ||
+    !Number.isInteger(targetMinute) ||
+    targetHour < 0 ||
+    targetHour > 23 ||
+    targetMinute < 0 ||
+    targetMinute > 59
+  ) {
+    return false
+  }
 
   const currentMinutes = now.getHours() * 60 + now.getMinutes()
   const targetMinutes = targetHour * 60 + targetMinute
@@ -192,19 +190,87 @@ export function isTimeAtOrAfter(reminderTime: string, now = new Date()): boolean
 }
 
 /**
- * Calculates milliseconds until the next scheduled reminder time.
- * If the time has already passed today, schedules for tomorrow.
+ * Determines whether a reminder is due today.
+ * JavaScript weekday values: Sunday=0 ... Saturday=6.
  */
-export function getMsUntilNextReminder(reminderTime: string, now = new Date()): number {
+export function isReminderDue(
+  reminderTime: string,
+  days: number[],
+  now = new Date()
+): boolean {
+  return (
+    days.includes(now.getDay()) &&
+    isTimeAtOrAfter(reminderTime, now)
+  )
+}
+
+/**
+ * Calculates the milliseconds until the next occurrence of a selected weekday.
+ *
+ * If today's selected reminder time has already passed,
+ * the next selected weekday is used.
+ */
+export function getMsUntilNextScheduledReminder(
+  reminderTime: string,
+  days: number[],
+  now = new Date()
+): number {
   const parts = reminderTime.split(':')
+
+  if (parts.length !== 2 || days.length === 0) {
+    return 7 * 24 * 60 * 60 * 1000
+  }
+
+  const hour = Number(parts[0])
+  const minute = Number(parts[1])
+
+  if (
+    !Number.isInteger(hour) ||
+    !Number.isInteger(minute) ||
+    hour < 0 ||
+    hour > 23 ||
+    minute < 0 ||
+    minute > 59 ||
+    days.some((day) => !Number.isInteger(day) || day < 0 || day > 6)
+  ) {
+    return 7 * 24 * 60 * 60 * 1000
+  }
+
+  for (let offset = 0; offset <= 7; offset++) {
+    const target = new Date(now)
+
+    target.setDate(target.getDate() + offset)
+    target.setHours(hour, minute, 0, 0)
+
+    if (
+      days.includes(target.getDay()) &&
+      target.getTime() > now.getTime()
+    ) {
+      return Math.max(1000, target.getTime() - now.getTime())
+    }
+  }
+
+  return 7 * 24 * 60 * 60 * 1000
+}
+
+/**
+ * Original daily helper retained for compatibility with existing tests.
+ */
+export function getMsUntilNextReminder(
+  reminderTime: string,
+  now = new Date()
+): number {
+  const parts = reminderTime.split(':')
+
   if (parts.length !== 2) return 60_000
+
   const targetHour = Number(parts[0])
   const targetMinute = Number(parts[1])
 
   const targetDate = new Date(now)
+
   targetDate.setHours(targetHour, targetMinute, 0, 0)
 
-  // If reminder time has already passed today, schedule for tomorrow
   if (targetDate.getTime() <= now.getTime()) {
     targetDate.setDate(targetDate.getDate() + 1)
   }

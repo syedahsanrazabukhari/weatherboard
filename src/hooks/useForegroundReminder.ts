@@ -1,123 +1,210 @@
+
 /**
  * Foreground Weather Reminder Hook
  *
- * Dispatches the daily weather reminder while the app is open in a browser tab.
- * Checks on load, on document `visibilitychange`, and sets a `setTimeout` to the
- * next scheduled reminder time.
- *
- * ARCHITECTURAL LIMITATION:
- * True Web Push at an exact time requires a backend push server.
- * Periodic Background Sync is Chromium-only, requires an installed PWA, and
- * the browser decides the actual execution window.
- * This hook acts as the foreground counterpart, guaranteeing delivery whenever
- * the user has WeatherBoard open or running in an open tab at their reminder time.
+ * Handles multiple reminders while WeatherBoard is open.
  */
 
 import { useEffect, useRef } from 'react'
-import { getPermission, showWeatherNotification } from '../lib/notifications'
+
 import {
-  getLastNotifiedDate,
+  getPermission,
+  showWeatherNotification,
+} from '../lib/notifications'
+
+import {
+  getReminderLastNotifiedDate,
   getReminderSettings,
-  setLastNotifiedDate,
+  setReminderLastNotifiedDate,
 } from '../lib/reminderStore'
+
 import {
   fetchReminderWeather,
   formatReminderNotification,
-  getMsUntilNextReminder,
+  getMsUntilNextScheduledReminder,
   getTodayLocalDateString,
-  isTimeAtOrAfter,
+  isReminderDue,
 } from '../lib/weatherReminderNotification'
+
+const REMINDERS_UPDATED_EVENT = 'weatherboard:reminders-updated'
 
 export function useForegroundReminder(): void {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const isCheckingRef = useRef<boolean>(false)
+  const isCheckingRef = useRef(false)
 
   useEffect(() => {
-    async function checkAndTriggerReminder(): Promise<void> {
-      if (isCheckingRef.current) return
+    let mounted = true
+
+    async function checkAndTriggerReminders(): Promise<void> {
+      if (isCheckingRef.current || !mounted) return
+
       isCheckingRef.current = true
 
       try {
-        if (getPermission() !== 'granted') {
-          return
-        }
+        if (getPermission() !== 'granted') return
 
-        const settings = await getReminderSettings()
-        if (!settings || !settings.enabled) {
-          return
-        }
+        const reminders = await getReminderSettings()
+        const today = getTodayLocalDateString()
 
-        const todayStr = getTodayLocalDateString()
-        const lastNotified = await getLastNotifiedDate()
+        for (const reminder of reminders) {
+          if (!mounted) return
 
-        // Only notify once per calendar day
-        if (lastNotified === todayStr) {
-          return
-        }
+          if (!reminder.enabled || reminder.days.length === 0) {
+            continue
+          }
 
-        // Check if the current time has reached or passed the scheduled time
-        if (!isTimeAtOrAfter(settings.time)) {
-          return
-        }
+          if (!isReminderDue(reminder.time, reminder.days)) {
+            continue
+          }
 
-        // Fetch conditions and display notification
-        const weatherData = await fetchReminderWeather(settings.lat, settings.lon)
-        const { title, body } = formatReminderNotification(settings.cityName, weatherData, settings.unit ?? 'c')
+          // Every reminder has independent notification history.
+          const lastNotified = await getReminderLastNotifiedDate(
+            reminder.id
+          )
 
-        const displayed = await showWeatherNotification(title, body)
-        if (displayed) {
-          await setLastNotifiedDate(todayStr)
+          if (lastNotified === today) {
+            continue
+          }
+
+          const weatherData = await fetchReminderWeather(
+            reminder.lat,
+            reminder.lon
+          )
+
+          if (!mounted) return
+
+          const { title, body } = formatReminderNotification(
+            reminder.cityName,
+            weatherData,
+            reminder.unit ?? 'c'
+          )
+
+          const displayed = await showWeatherNotification(
+            title,
+            body,
+            {
+              tag: `weatherboard-reminder-${reminder.id}`,
+            }
+          )
+
+          if (displayed) {
+            await setReminderLastNotifiedDate(
+              reminder.id,
+              today
+            )
+          }
         }
       } catch (error) {
-        console.warn('[ForegroundReminder] Check failed:', error)
+        console.warn(
+          '[ForegroundReminder] Reminder processing failed:',
+          error
+        )
       } finally {
         isCheckingRef.current = false
       }
     }
 
     async function scheduleNextTimer(): Promise<void> {
+      if (!mounted) return
+
       if (timerRef.current) {
         clearTimeout(timerRef.current)
         timerRef.current = null
       }
 
-      const settings = await getReminderSettings()
-      if (!settings || !settings.enabled) {
-        return
+      try {
+        const reminders = await getReminderSettings()
+
+        if (!mounted) return
+
+        const activeReminders = reminders.filter(
+          (reminder) =>
+            reminder.enabled &&
+            reminder.days.length > 0
+        )
+
+        if (activeReminders.length === 0) return
+
+        const delays = activeReminders.map((reminder) =>
+          getMsUntilNextScheduledReminder(
+            reminder.time,
+            reminder.days
+          )
+        )
+
+        const nextDelay = Math.min(...delays)
+
+        timerRef.current = setTimeout(async () => {
+          await checkAndTriggerReminders()
+
+          if (mounted) {
+            void scheduleNextTimer()
+          }
+        }, nextDelay)
+      } catch (error) {
+        console.warn(
+          '[ForegroundReminder] Scheduling failed:',
+          error
+        )
       }
-
-      const msUntilNext = getMsUntilNextReminder(settings.time)
-
-      timerRef.current = setTimeout(async () => {
-        await checkAndTriggerReminder()
-        void scheduleNextTimer()
-      }, msUntilNext)
     }
 
-    // 1. Check immediately on mount/load
-    void checkAndTriggerReminder().then(() => {
-      void scheduleNextTimer()
-    })
+    async function refreshReminders(): Promise<void> {
+      await checkAndTriggerReminders()
 
-    // 2. Check on visibilitychange (e.g. user returns to the tab or unminimizes)
+      if (mounted) {
+        await scheduleNextTimer()
+      }
+    }
+
+    // Initial check when the app opens.
+    void refreshReminders()
+
+    // Recheck when the user returns to the application.
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        void checkAndTriggerReminder()
+        void refreshReminders()
       }
     }
-    document.addEventListener('visibilitychange', handleVisibilityChange)
 
-    // 3. Fallback interval check every 60 seconds to catch system sleep wakeups
+    // Recalculate scheduling after settings changes.
+    const handleRemindersUpdated = () => {
+      void refreshReminders()
+    }
+
+    document.addEventListener(
+      'visibilitychange',
+      handleVisibilityChange
+    )
+
+    window.addEventListener(
+      REMINDERS_UPDATED_EVENT,
+      handleRemindersUpdated
+    )
+
+    // Catch wakeups and delayed timers.
     const intervalId = setInterval(() => {
-      void checkAndTriggerReminder()
+      void checkAndTriggerReminders()
     }, 60_000)
 
     return () => {
+      mounted = false
+
       if (timerRef.current) {
         clearTimeout(timerRef.current)
       }
+
       clearInterval(intervalId)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
+
+      document.removeEventListener(
+        'visibilitychange',
+        handleVisibilityChange
+      )
+
+      window.removeEventListener(
+        REMINDERS_UPDATED_EVENT,
+        handleRemindersUpdated
+      )
     }
   }, [])
 }
