@@ -62,7 +62,7 @@ export function useForegroundReminder(): void {
 
         // Fetch conditions and display notification
         const weatherData = await fetchReminderWeather(settings.lat, settings.lon)
-        const { title, body } = formatReminderNotification(settings.cityName, weatherData)
+        const { title, body } = formatReminderNotification(settings.cityName, weatherData, settings.unit ?? 'c')
 
         const displayed = await showWeatherNotification(title, body)
         if (displayed) {

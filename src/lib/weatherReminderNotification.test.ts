@@ -53,3 +53,19 @@ describe('weatherReminderNotification', () => {
     expect(tomorrowMs).toBe(82_800_000)
   })
 })
+
+describe('formatReminderNotification units', () => {
+  const data = { tempC: 27, description: 'haze', highC: 29, lowC: 26 }
+
+  it('formats in Celsius by default', () => {
+    expect(formatReminderNotification('Karachi', data).body).toBe(
+      'Karachi: 27°C, haze. High 29°, low 26°.'
+    )
+  })
+
+  it('formats in Fahrenheit when requested', () => {
+    expect(formatReminderNotification('Karachi', data, 'f').body).toBe(
+      'Karachi: 81°F, haze. High 84°, low 79°.'
+    )
+  })
+})

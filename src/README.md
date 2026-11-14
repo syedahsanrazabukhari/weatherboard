@@ -4,7 +4,7 @@ A responsive, installable weather dashboard. Search any city, see current condit
 
 Built as a technical challenge for Edspire (Frontend React Developer).
 
-- **Live app:** https://YOUR-APP.vercel.app
+- **Live app:** https://weatherboardpredictor.netlify.app/
 - **Repository:** https://github.com/syedahsanrazabukhari/weatherboard
 - **IDE used:** Google Antigravity (see [PROMPTS.md](./PROMPTS.md) for the full prompt history)
 

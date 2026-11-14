@@ -142,15 +142,21 @@ export async function fetchReminderWeather(
  */
 export function formatReminderNotification(
   cityName: string,
-  data: ReminderWeatherData | null
+  data: ReminderWeatherData | null,
+  unit: 'c' | 'f' = 'c'
 ): NotificationPayload {
   if (data) {
-    const temp = Math.round(data.tempC)
-    const high = Math.round(data.highC)
-    const low = Math.round(data.lowC)
+    const toUnit = (celsius: number) => {
+      const value = Math.round(unit === 'f' ? (celsius * 9) / 5 + 32 : celsius)
+      return value === 0 ? 0 : value // avoids "-0"
+    }
+    const temp = toUnit(data.tempC)
+    const high = toUnit(data.highC)
+    const low = toUnit(data.lowC)
+    const symbol = unit === 'f' ? '°F' : '°C'
     return {
       title: 'Good morning!',
-      body: `${cityName}: ${temp}°C, ${data.description}. High ${high}°, low ${low}°.`,
+      body: `${cityName}: ${temp}${symbol}, ${data.description}. High ${high}°, low ${low}°.`,
     }
   }
 

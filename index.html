@@ -3,15 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#090d16" />
+    <meta name="theme-color" content="#050505" />
+    <meta name="color-scheme" content="dark light" />
     <meta name="description" content="Client-side installable weather dashboard" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <title>WeatherBoard</title>
+    <script>
+      // Apply the saved (or system) theme before first paint to avoid a flash.
+      (function () {
+        try {
+          var pref = window.localStorage.getItem('weatherboard:theme:v1');
+          var light =
+            pref === 'light' ||
+            ((pref === null || pref === 'system') &&
+              window.matchMedia('(prefers-color-scheme: light)').matches);
+          document.documentElement.setAttribute('data-theme', light ? 'light' : 'dark');
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
   </head>
-  <body class="h-full bg-slate-950 text-slate-100 antialiased selection:bg-slate-800 selection:text-slate-200">
+  <body class="h-full antialiased">
     <div id="root" class="min-h-full"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

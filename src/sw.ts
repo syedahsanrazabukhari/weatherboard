@@ -118,7 +118,7 @@ async function handleDailyWeatherPeriodicSync(): Promise<void> {
 
     // Try Open-Meteo first (no API key, fast) with the stored lat/lon
     const weatherData = await fetchReminderWeather(settings.lat, settings.lon)
-    const { title, body } = formatReminderNotification(settings.cityName, weatherData)
+    const { title, body } = formatReminderNotification(settings.cityName, weatherData, settings.unit ?? 'c')
 
     await self.registration.showNotification(title, {
       body,

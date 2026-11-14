@@ -13,6 +13,8 @@ import { useOnlineStatus } from './hooks/useOnlineStatus'
 import { useWeather } from './hooks/useWeather'
 import { readLastCity, readLastWeatherReport } from './lib/safeStorage'
 import { ambientGlow } from './lib/weatherTheme'
+import { ThemeToggle } from './components/ThemeToggle'
+import { UnitToggle } from './components/UnitToggle'
 import { City } from './types'
 
 function formatCityTime(isoString: string, timezoneOffsetSeconds: number): string {
@@ -64,13 +66,13 @@ export default function App() {
   const glowKey = report ? `${report.current.condition}-${report.current.isNight}` : 'idle'
 
   return (
-    <div className="relative isolate flex min-h-screen flex-col bg-[#050505] text-[#f2f2f2] selection:bg-white/20">
+    <div className="relative isolate flex min-h-screen flex-col bg-page text-fg selection:bg-white/20">
       <div
         key={glowKey}
         aria-hidden="true"
         className="animate-ambient pointer-events-none fixed inset-0 -z-10"
         style={{
-          background: `radial-gradient(60% 46% at 78% -4%, ${glow}, transparent 70%), radial-gradient(48% 36% at 4% 104%, rgba(255,255,255,0.045), transparent 70%)`,
+          background: `radial-gradient(60% 46% at 78% -4%, ${glow}, transparent 70%), radial-gradient(48% 36% at 4% 104%, var(--glow-bl), transparent 70%)`,
         }}
       />
 
@@ -80,24 +82,24 @@ export default function App() {
         lastUpdatedTime={lastUpdatedTime}
       />
 
-      <header className="sticky top-0 z-40 border-b border-white/[0.07] bg-[#050505]/75 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-line bg-page/75 backdrop-blur-xl">
         <div className="mx-auto flex h-[68px] max-w-[1440px] items-center justify-between px-4 sm:px-7 lg:px-10">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/15 bg-[#1c1c1c]">
-              <CloudSun className="h-[19px] w-[19px] text-[#e8e0d2]" strokeWidth={1.7} />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-line-2 bg-raised">
+              <CloudSun className="h-[19px] w-[19px] text-accent-text" strokeWidth={1.7} />
             </div>
             <div>
-              <h1 className="text-[15px] font-semibold tracking-[-0.04em] text-white sm:text-base">
+              <h1 className="text-[15px] font-semibold tracking-[-0.04em] text-fg sm:text-base">
                 WeatherBoard
               </h1>
-              <p className="hidden text-[10px] tracking-[0.16em] text-[#777] sm:block">
+              <p className="hidden text-[10px] tracking-[0.16em] text-fg-3 sm:block">
                 WEATHER, AT A GLANCE
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="hidden text-[11px] text-[#777] sm:inline">
+            <span className="hidden text-[11px] text-fg-3 sm:inline">
               Live weather dashboard
             </span>
             <div className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-medium ${
@@ -116,16 +118,22 @@ export default function App() {
 
       <main className="w-full flex-1 px-4 py-7 sm:px-7 sm:py-9 lg:px-10">
         <div className="mx-auto max-w-[1440px]">
-          <div className="mb-7 flex flex-col gap-2">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#777]">
-              Your personal weather station
-            </p>
-            <h2 className="text-2xl font-semibold tracking-[-0.055em] text-white sm:text-3xl">
-              Weather overview<span className="text-[#777]">.</span>
-            </h2>
-            <p className="max-w-xl text-sm leading-6 text-[#858585]">
-              Current conditions, upcoming forecasts and daily updates for the places that matter.
-            </p>
+          <div className="mb-7 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex flex-col gap-2">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-fg-3">
+                Your personal weather station
+              </p>
+              <h2 className="text-2xl font-semibold tracking-[-0.055em] text-fg sm:text-3xl">
+                Weather overview<span className="text-fg-3">.</span>
+              </h2>
+              <p className="max-w-xl text-sm leading-6 text-fg-2">
+                Current conditions, upcoming forecasts and daily updates for the places that matter.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3" role="group" aria-label="Display preferences">
+              <UnitToggle />
+              <ThemeToggle />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12 lg:gap-7">
@@ -163,18 +171,18 @@ export default function App() {
               {status === 'idle' && (
                 <section
                   aria-label="Empty State"
-                  className="overflow-hidden rounded-3xl border border-white/[0.09] bg-[#0b0b0b]/80 px-6 py-14 text-center backdrop-blur-xl sm:py-20"
+                  className="overflow-hidden rounded-3xl border border-line bg-card px-6 py-14 text-center backdrop-blur-xl sm:py-20"
                 >
-                  <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-[#1b1b1b]">
-                    <CloudSun className="h-7 w-7 text-[#b5a58e]" strokeWidth={1.4} />
+                  <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-line bg-raised">
+                    <CloudSun className="h-7 w-7 text-accent-text" strokeWidth={1.4} />
                   </div>
-                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#777]">
+                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-fg-3">
                     Start exploring
                   </p>
-                  <h3 className="text-lg font-semibold tracking-tight text-white sm:text-xl">
+                  <h3 className="text-lg font-semibold tracking-tight text-fg sm:text-xl">
                     Search for a city
                   </h3>
-                  <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#858585]">
+                  <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-fg-2">
                     Find a location to see its current weather, conditions and five-day forecast.
                   </p>
                 </section>
@@ -194,7 +202,7 @@ export default function App() {
             </aside>
           </div>
 
-          <footer className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-white/[0.07] pt-5 text-[11px] text-[#666] sm:flex-row">
+          <footer className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-line pt-5 text-[11px] text-fg-3 sm:flex-row">
             <span>WeatherBoard · Clear skies, clear decisions.</span>
             <span className="flex items-center gap-1.5">
               Built for everyday forecasts

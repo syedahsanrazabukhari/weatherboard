@@ -1,10 +1,114 @@
 @import "tailwindcss";
 
+/* ------------------------------------------------------------------
+   Theme tokens. Dark is the default; light is applied with
+   <html data-theme="light"> (set by useTheme / the inline script in
+   index.html). Components use the semantic utilities generated from
+   @theme below (text-fg, bg-card, border-line, ...), never raw hex.
+   ------------------------------------------------------------------ */
 :root {
   color-scheme: dark;
+  --page: #050505;
+  --fg: #f2f2f2;
+  --fg-2: #8f8f8f;
+  --fg-3: #777777;
+  --line: rgba(255, 255, 255, 0.09);
+  --line-2: rgba(255, 255, 255, 0.18);
+  --fill: rgba(255, 255, 255, 0.035);
+  --fill-2: rgba(255, 255, 255, 0.075);
+  --card: rgba(11, 11, 11, 0.8);
+  --panel: #111111;
+  --raised: #1b1b1b;
+  --control: #242424;
+  --control-hover: #303030;
+  --scrim: rgba(0, 0, 0, 0.8);
+  --tint: #211c14;
+  --accent-text: #c5ad88;
+  --card-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+  --pop-shadow: 0 24px 80px rgba(0, 0, 0, 0.7);
+  --bar-from: #c9d0d6;
+  --shimmer-a: #141414;
+  --shimmer-b: #212121;
+  --glow-bl: rgba(255, 255, 255, 0.045);
+  --scroll-track: #111111;
+  --scroll-thumb: #383838;
+
+  /* weather icon palette */
+  --wx-cloud-top: #ffffff;
+  --wx-cloud-bot: #c4cad3;
+  --wx-cloud-shadow: rgba(0, 0, 0, 0.45);
+  --wx-dark-top: #b4bac4;
+  --wx-dark-bot: #6f7580;
+  --wx-storm-top: #8f95a0;
+  --wx-storm-bot: #4a4f59;
+  --wx-moon-top: #ffffff;
+  --wx-moon-bot: #c9c3e4;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --page: #f4f2ee;
+  --fg: #15171a;
+  --fg-2: #5c6168;
+  --fg-3: #6b7077;
+  --line: rgba(20, 22, 26, 0.12);
+  --line-2: rgba(20, 22, 26, 0.26);
+  --fill: rgba(20, 22, 26, 0.035);
+  --fill-2: rgba(20, 22, 26, 0.07);
+  --card: rgba(255, 255, 255, 0.82);
+  --panel: #ffffff;
+  --raised: #f7f6f3;
+  --control: #eeece8;
+  --control-hover: #e3e1dc;
+  --scrim: rgba(20, 22, 26, 0.45);
+  --tint: #fbf1de;
+  --accent-text: #8a6a3a;
+  --card-shadow: 0 18px 50px rgba(40, 34, 20, 0.12);
+  --pop-shadow: 0 24px 60px rgba(40, 34, 20, 0.25);
+  --bar-from: #8e9aa8;
+  --shimmer-a: #e9e7e2;
+  --shimmer-b: #f7f6f3;
+  --glow-bl: rgba(20, 22, 26, 0.03);
+  --scroll-track: #ebe9e4;
+  --scroll-thumb: #c4c1ba;
+
+  --wx-cloud-top: #fbfdff;
+  --wx-cloud-bot: #a9b4c3;
+  --wx-cloud-shadow: rgba(30, 40, 60, 0.3);
+  --wx-dark-top: #98a1af;
+  --wx-dark-bot: #5d6673;
+  --wx-storm-top: #6f7685;
+  --wx-storm-bot: #3f444e;
+  --wx-moon-top: #ffe9a0;
+  --wx-moon-bot: #f2b33d;
+}
+
+@theme inline {
+  --color-page: var(--page);
+  --color-fg: var(--fg);
+  --color-fg-2: var(--fg-2);
+  --color-fg-3: var(--fg-3);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-fill: var(--fill);
+  --color-fill-2: var(--fill-2);
+  --color-card: var(--card);
+  --color-panel: var(--panel);
+  --color-raised: var(--raised);
+  --color-control: var(--control);
+  --color-control-hover: var(--control-hover);
+  --color-scrim: var(--scrim);
+  --color-tint: var(--tint);
+  --color-accent-text: var(--accent-text);
+  --color-bar-from: var(--bar-from);
+  --shadow-card: var(--card-shadow);
+  --shadow-pop: var(--pop-shadow);
+}
+
+:root {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #050505;
-  color: #f2f2f2;
+  background: var(--page);
+  color: var(--fg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -18,7 +122,7 @@
 html {
   min-width: 320px;
   min-height: 100%;
-  background: #050505;
+  background: var(--page);
   scroll-behavior: smooth;
 }
 
@@ -26,7 +130,8 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background: #050505;
+  background: var(--page);
+  color: var(--fg);
 }
 
 button,
@@ -44,7 +149,7 @@ button:disabled {
 
 ::selection {
   color: #fff;
-  background: #555;
+  background: #6b6b6b;
 }
 
 ::-webkit-scrollbar {
@@ -53,12 +158,12 @@ button:disabled {
 }
 
 ::-webkit-scrollbar-track {
-  background: #111;
+  background: var(--scroll-track);
 }
 
 ::-webkit-scrollbar-thumb {
   border-radius: 20px;
-  background: #383838;
+  background: var(--scroll-thumb);
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -108,7 +213,7 @@ button:disabled {
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, #141414 25%, #212121 50%, #141414 75%);
+  background: linear-gradient(90deg, var(--shimmer-a) 25%, var(--shimmer-b) 50%, var(--shimmer-a) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.7s infinite linear;
 }
@@ -206,6 +311,24 @@ button:disabled {
 .wx-still * {
   animation: none !important;
 }
+
+/* ------------------------------------------------------------------
+   Light theme: status colours that are too pale on a light surface.
+   (Only the Tailwind palette classes the app actually uses.)
+   ------------------------------------------------------------------ */
+:root[data-theme='light'] .text-amber-100,
+:root[data-theme='light'] .text-amber-200 { color: #7c4a03; }
+:root[data-theme='light'] .text-amber-300,
+:root[data-theme='light'] .text-amber-400 { color: #b45309; }
+:root[data-theme='light'] .text-emerald-100,
+:root[data-theme='light'] .text-emerald-200 { color: #064e3b; }
+:root[data-theme='light'] .text-emerald-300,
+:root[data-theme='light'] .text-emerald-400 { color: #047857; }
+:root[data-theme='light'] .text-rose-300,
+:root[data-theme='light'] .text-rose-400 { color: #be123c; }
+:root[data-theme='light'] .hover\:text-amber-300:hover { color: #b45309; }
+:root[data-theme='light'] .hover\:text-rose-400:hover { color: #be123c; }
+:root[data-theme='light'] .hover\:text-emerald-200:hover { color: #064e3b; }
 
 @media (prefers-reduced-motion: reduce) {
   *,

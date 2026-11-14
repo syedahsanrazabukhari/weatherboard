@@ -15,6 +15,8 @@ export interface ReminderSettings {
   cityName: string
   lat: number
   lon: number
+  /** Display unit for notifications ('c' default). Kept in sync by useUnit. */
+  unit?: 'c' | 'f'
 }
 
 export const REMINDER_SETTINGS_KEY = 'weatherboard_reminder_settings_v1'
@@ -53,7 +55,8 @@ export function isValidReminderSettings(item: unknown): item is ReminderSettings
     typeof s.cityId === 'number' &&
     typeof s.cityName === 'string' &&
     typeof s.lat === 'number' &&
-    typeof s.lon === 'number'
+    typeof s.lon === 'number' &&
+    (s.unit === undefined || s.unit === 'c' || s.unit === 'f')
   )
 }
 
@@ -153,5 +156,20 @@ export async function setLastNotifiedDate(dateString: string): Promise<boolean> 
   } catch (error) {
     console.warn('[ReminderStore] Failed to write lastNotifiedDate:', error)
     return false
+  }
+}
+
+/**
+ * Updates only the unit of the saved reminder (if a reminder exists), so the
+ * service worker formats background notifications in the unit the user picked.
+ */
+export async function setReminderUnit(unit: 'c' | 'f'): Promise<void> {
+  try {
+    const settings = await getReminderSettings()
+    if (settings && settings.unit !== unit) {
+      await setReminderSettings({ ...settings, unit })
+    }
+  } catch (error) {
+    console.warn('[ReminderStore] Failed to update reminder unit:', error)
   }
 }
